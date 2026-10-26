@@ -1,0 +1,10 @@
+{
+  "name": "ratna-nursing-home",
+  "private": true,
+  "description": "Ratna Nursing Home, Tanuku: website (static).",
+  "type": "module",
+  "scripts": {
+    "build": "node build/build.mjs",
+    "start": "node build/serve.mjs"
+  }
+}

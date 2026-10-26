@@ -1,0 +1,7 @@
+# Local tool settings and caches
+.claude/
+.impeccable/
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini
