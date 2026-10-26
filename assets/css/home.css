@@ -498,3 +498,124 @@ a.strip-value:hover { color: var(--red); }
 .form-status .status-title { display: block; margin-bottom: 2px; font-size: 1rem; }
 .form-status.is-ok { padding: 16px 18px 16px 52px; position: relative; }
 .form-status.is-ok::before { content: ""; position: absolute; left: 16px; top: 16px; width: 24px; height: 24px; border-radius: 50%; background: #1E7F4F url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 14px no-repeat; }
+
+/* =================== Phones (under 760px): shorter, calmer, one thing at a time =================== */
+@media (max-width: 759px) {
+  /* Hero: words first, a smaller dial, the essentials as a tidy list; no line through the numbers */
+  .hero { min-height: 0; }
+  .hero-grid { padding-block: 18px 26px; gap: 26px; }
+  .hero-title { font-size: clamp(2.5rem, 11.5vw, 3.25rem); margin: 4px 0 16px; }
+  .hero-sub { font-size: 1rem; margin-bottom: 22px; }
+  .hero .btn-row { display: grid; gap: 10px; }
+  .hero .btn { width: 100%; min-height: 52px; }
+  .hero-visual { width: min(230px, 62vw); }
+  .hero-thread { display: none; }
+  .hero-strip { display: grid; grid-template-columns: 1fr; gap: 0; padding: 4px 0 24px; }
+  .hero-strip li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .strip-label { margin: 0; font-size: var(--fs-small); }
+  .strip-value { font-size: 1.05rem; text-align: right; }
+  .strip-sub { margin-left: auto; }
+  .js .hero-title .line > span { animation-duration: .9s; animation-delay: calc(var(--l) * 70ms + 60ms); }
+  .js .hero-in { animation-duration: .7s; animation-delay: calc(var(--d) * 40ms + 80ms); }
+  .js .hero-seal { animation-duration: 1s; animation-delay: .15s; }
+  .js .hero-logo { animation-duration: .8s; animation-delay: .35s; }
+  .marquee { padding-block: 16px; }
+  .marquee-group { font-size: 1.4rem; gap: 28px; padding-right: 28px; }
+
+  /* Things that spin or follow the scroll stay still on phones */
+  .seal-dial, .rating-dial .dial, .footer-seal .dial, .pop-seal .dial { animation: none; }
+  .about-float { transform: none !important; }
+
+  /* Departments: compact swipe cards */
+  .depts-pin { padding-block: 56px 40px; }
+  .depts-head { margin-bottom: 18px; gap: 14px; }
+  .depts-side .intro { margin-bottom: 0; font-size: 1rem; }
+  .depts-progress { display: none; }
+  .depts-track { gap: 12px; padding-bottom: 20px; }
+  .dcard { width: min(80vw, 320px); }
+  .dcard-link { min-height: 0; padding: 22px 20px; }
+  .dcard-medal { width: 76px; }
+  .dcard-name { margin-top: 16px; font-size: 1.55rem; }
+  .dcard-summary { margin: 8px 0 16px; }
+
+  /* How we treat you */
+  .approach-beat { display: none; }
+  .steps-wrap { padding-left: 52px; }
+  .flow-num { left: -52px; width: 36px; }
+  .flow-rail { left: 17px; }
+  .steps-flow { gap: 36px; }
+  .flow-step h3 { font-size: 1.55rem; margin-bottom: 8px; }
+  .flow-step p { font-size: 1rem; }
+
+  /* About: a smaller collage */
+  .about-grid { gap: 36px; }
+  .about-collage { max-width: 320px; padding: 0 16% 12% 0; }
+  .about-photo { aspect-ratio: 1; }
+  .about-chip { left: 0; bottom: 4%; padding: 8px 14px 8px 8px; gap: 10px; }
+  .about-chip-mark { width: 34px; height: 34px; }
+  .about-chip strong { font-size: 1rem; }
+  .facilities { margin-top: 24px; }
+  .facility-list li { min-height: 36px; padding: 0 12px 0 10px; font-size: .875rem; }
+  .stats { margin-top: 28px; }
+
+  /* Doctors: short side-by-side cards instead of tall portraits */
+  .doc-grid { grid-template-columns: 1fr; gap: 12px; }
+  .doc { flex-direction: row; border-radius: 20px; }
+  .doc-portrait { flex: none; width: 92px; aspect-ratio: auto; place-items: start center; padding-top: 18px; }
+  .doc-portrait .dial, .doc-photo-note { display: none; }
+  .doc-face { width: 64px; }
+  .doc-initials { font-size: 1.45rem; }
+  .doc-body { padding: 16px 16px 16px 4px; border-top: 0; }
+  .doc-dept { margin-bottom: 4px; }
+  .doc-name { font-size: 1.25rem; margin-bottom: 6px; }
+  .doc-qual { font-size: .875rem; }
+  .doc-reg { margin-bottom: 12px; }
+  .doc-book { min-height: 44px; padding: 8px 16px; font-size: .875rem; align-self: flex-start; }
+
+  /* Find us */
+  .visit { padding: 8px; gap: 8px; border-radius: 24px; }
+  .visit-info { padding: 18px 12px 12px; }
+  .visit-address { font-size: 1.35rem; margin-bottom: 18px; }
+  .visit-lines { margin-bottom: 20px; }
+  .visit-lines > div { grid-template-columns: 92px 1fr; padding: 12px 0; }
+  .visit-actions { display: grid; }
+  .visit-actions .btn { width: 100%; }
+  .visit-map { min-height: 240px; border-radius: 18px; }
+
+  /* Gallery: one swipeable row */
+  .tabs { display: flex; flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; margin-bottom: 20px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: none; }
+  .bento { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding: 4px var(--gutter) 12px; scroll-padding-inline: var(--gutter); }
+  .bento::-webkit-scrollbar { display: none; }
+  .bento > li { flex: none; width: 72vw; max-width: 300px; height: 240px; scroll-snap-align: start; }
+
+  /* Reviews: rating beside a smaller dial */
+  .reviews-grid { gap: 28px; }
+  .rating { grid-template-columns: 128px 1fr; align-items: center; column-gap: 18px; row-gap: 14px; }
+  .rating-dial { width: 128px; grid-row: span 2; }
+  .rating-face { gap: 6px; }
+  .rating-value { font-size: 2.6rem; }
+  .stars-part .stars svg, .rating-face .stars svg { width: 12px; height: 12px; }
+  .rating p { margin: 0; }
+  .rating .btn { grid-column: 1 / -1; width: 100%; }
+  .review { padding: 22px 20px; }
+  .review blockquote { font-size: .975rem; }
+
+  /* Booking: tighter form, four time slots to a row */
+  .book-form { padding: 22px 16px; border-radius: 22px; }
+  .book .form-grid { gap: 16px; }
+  .date-field input { max-width: none; }
+  .slot-row { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .slot span { min-height: 44px; padding: 0 2px; font-size: .78rem; border-radius: 10px; }
+  .pick-row { gap: 6px; }
+  .pick span { min-height: 44px; padding: 0 14px; font-size: .84rem; }
+  .book-submit { margin-top: 22px; }
+  .book-call { padding: 22px 18px; border-radius: 22px; }
+  .book-hours { display: none; } /* the time picker and Find us already show the timings */
+  .pick-row { display: grid; grid-template-columns: 1fr 1fr; }
+  .pick span { width: 100%; justify-content: center; text-align: center; line-height: 1.2; padding: 6px 10px; }
+  .visit-actions { grid-template-columns: 1fr 1fr; }
+  .visit-actions .btn:first-child { grid-column: 1 / -1; }
+  .visit-actions .btn { padding-inline: 12px; font-size: .875rem; }
+}

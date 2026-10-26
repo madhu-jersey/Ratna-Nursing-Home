@@ -37,7 +37,7 @@ const heroSlot = () => `<!-- HERO. If an approved hero design arrives, it replac
           <g class="seal-ticks">${Array.from({ length: 72 }, (_, i) => `<line x1="300" y1="${i % 6 ? 10 : 4}" x2="300" y2="${i % 6 ? 22 : 30}" transform="rotate(${i * 5} 300 300)"/>`).join('')}</g>
         </svg>
         <div class="seal-face">
-          <img class="hero-logo" src="${R}assets/img/logo.png" alt="${esc(SITE.name)} logo" width="720" height="402" fetchpriority="high">
+          <img class="hero-logo" src="${R}assets/img/logo-480.png" srcset="${R}assets/img/logo-480.png 480w, ${R}assets/img/logo.png 720w" sizes="(max-width: 759px) 50vw, 420px" alt="${esc(SITE.name)} logo" width="720" height="402" fetchpriority="high" decoding="async">
         </div>
       </div>
     </div>
@@ -391,7 +391,7 @@ const bookingPopup = () => `<div id="book-pop" class="book-pop" role="dialog" ar
     <svg class="pop-beat" viewBox="0 0 400 40" preserveAspectRatio="none" fill="none" aria-hidden="true"><path pathLength="1" d="${BEAT}"/></svg>
     <button class="pop-close" type="button" data-pop-close aria-label="Close">${icon('i-close')}</button>
     <div class="pop-head">
-      <span class="pop-seal">${dial('pop-dial', 48)}<img src="${R}assets/img/logo.png" alt="" width="720" height="402"></span>
+      <span class="pop-seal">${dial('pop-dial', 48)}<img src="${R}assets/img/logo-240.png" alt="" width="240" height="134" loading="lazy" decoding="async"></span>
       <div>
         <h2 id="pop-title">Book an appointment</h2>
         <p>Leave your details. We will email you once the hospital confirms a time.</p>

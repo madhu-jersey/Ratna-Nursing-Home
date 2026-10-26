@@ -160,7 +160,8 @@
 
   /* ---------- Parallax (transform only, only while visible) ---------- */
   const parallaxEls = $$('[data-parallax]');
-  if (parallaxEls.length && motionOK()) {
+  // Desktop only: on phones, moving pictures against a touch scroll feels jumpy and costs battery
+  if (parallaxEls.length && motionOK() && matchMedia('(min-width: 760px)').matches) {
     const visible = new Set();
     const pio = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)), { rootMargin: '20% 0px' });
     parallaxEls.forEach(el => pio.observe(el));

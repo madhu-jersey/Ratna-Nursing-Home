@@ -624,3 +624,32 @@ html.lenis, html.lenis body { height: auto; }
 
 /* Inline phone links still get a 44px touch target */
 .info-list a, .footer-branch a { display: inline-flex; align-items: center; min-height: 44px; margin-block: -12px; }
+
+/* ---------- Phones: tighter sections, a solid header (blur is costly on phones), a shorter footer ---------- */
+@media (max-width: 759px) {
+  :root { --section-y: 60px; }
+  .section-head { margin-bottom: 28px; gap: 14px; }
+  .section-head .intro { font-size: 1rem; }
+  .site-header, .home .site-header:not(.is-scrolled) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .site-header { background: var(--white); }
+  .site-header .wrap { min-height: 64px; }
+  .brand-logo { height: 38px; }
+  .brand-name { font-size: 1.15rem; }
+  .brand-name small { font-size: .78rem; }
+  .acc-btn { min-height: 64px; padding: 16px 0; font-size: 1rem; }
+  .footer-hero { padding: 64px var(--gutter) 40px; }
+  .footer-seal { width: 116px; }
+  .footer-thread { top: calc(64px + 58px - 50px); }
+  .footer-name { font-size: 2.1rem; margin: 20px 0 8px; }
+  .footer-tagline { font-size: 1rem; margin-bottom: 22px; }
+  .footer-actions { display: grid; width: 100%; gap: 10px; }
+  .footer-actions .btn { width: 100%; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 28px 20px; padding-top: 32px; }
+  .footer-top > div { grid-column: 1 / -1; }
+  .site-footer nav[aria-label="Sections"] { display: none; } /* the header menu already lists these */
+  .site-footer nav[aria-label="Departments"] { grid-column: 1 / -1; }
+  .site-footer li a { min-height: 36px; font-size: .875rem; }
+  .socials { margin-top: 28px; }
+  .footer-legal { margin-top: 28px; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; margin-top: 28px; }
+}

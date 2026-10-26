@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { SITE, BRANCHES, PRIMARY, SERVICES, LEGAL, EMERGENCY } from './data.mjs';
 
 export const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -109,7 +111,7 @@ export const header = (R = '') => `<a class="skip-link" href="#main">Skip to con
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="${R || './'}" aria-label="${esc(SITE.name)}, home">
-      <img class="brand-logo" src="${R}assets/img/logo.png" alt="" width="720" height="402">
+      <img class="brand-logo" src="${R}assets/img/logo-240.png" alt="" width="240" height="134">
       <span class="brand-name">${esc(SITE.short)}<small>${esc(SITE.descriptor)}</small></span>
     </a>
     <nav aria-label="Main">
@@ -181,7 +183,7 @@ export const footer = (R = '') => `<footer class="site-footer">
     <svg class="footer-thread reveal-draw" viewBox="0 0 1440 100" preserveAspectRatio="none" fill="none" aria-hidden="true"><path pathLength="1" d="M0 50 H560 l16 -20 l18 44 l22 -68 l20 64 l14 -20 H1440"/></svg>
     <div class="footer-seal">
       ${dial('footer-dial', 72)}
-      <span class="footer-face"><img class="footer-logo" src="${R}assets/img/logo.png" alt="${esc(SITE.name)} logo" width="720" height="402" loading="lazy"></span>
+      <span class="footer-face"><img class="footer-logo" src="${R}assets/img/logo-240.png" alt="${esc(SITE.name)} logo" width="240" height="134" loading="lazy" decoding="async"></span>
     </div>
     <p class="footer-name">${esc(SITE.name)}</p>
     <p class="footer-tagline">${esc(SITE.tagline)}</p>
@@ -222,6 +224,11 @@ export const footer = (R = '') => `<footer class="site-footer">
   </div>
 </footer>`;
 
+// A fingerprint of the styles and script: it changes only when they do, so browsers can cache them for a year
+const BUILD = createHash('sha1')
+  .update(['css/site.css', 'css/home.css', 'js/site.js'].map(f => readFileSync(new URL(`../assets/${f}`, import.meta.url))).join(''))
+  .digest('hex').slice(0, 10);
+
 export const head = ({ title, description, R = '', extraCss = [] }) => `<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
@@ -231,7 +238,7 @@ export const head = ({ title, description, R = '', extraCss = [] }) => `<meta ch
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap">
-<link rel="stylesheet" href="${R}assets/css/site.css">
-${extraCss.map(f => `<link rel="stylesheet" href="${R}assets/css/${f}">`).join('\n')}
+<link rel="stylesheet" href="${R}assets/css/site.css?v=${BUILD}">
+${extraCss.map(f => `<link rel="stylesheet" href="${R}assets/css/${f}?v=${BUILD}">`).join('\n')}
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-<script src="${R}assets/js/site.js" defer></script>`;
+<script src="${R}assets/js/site.js?v=${BUILD}" defer></script>`;
