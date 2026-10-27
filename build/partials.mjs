@@ -179,21 +179,15 @@ export const pcpndtNote = () => `<p class="legal-note"><strong>PC-PNDT Act.</str
 
 /* Footer: closes the page the way the hero opens it, a heartbeat running into the logo's dial */
 export const footer = (R = '') => `<footer class="site-footer">
-  <div class="footer-hero">
-    <svg class="footer-thread reveal-draw" viewBox="0 0 1440 100" preserveAspectRatio="none" fill="none" aria-hidden="true"><path pathLength="1" d="M0 50 H560 l16 -20 l18 44 l22 -68 l20 64 l14 -20 H1440"/></svg>
-    <div class="footer-seal">
-      ${dial('footer-dial', 72)}
-      <span class="footer-face"><img class="footer-logo" src="${R}assets/img/logo-240.png" alt="${esc(SITE.name)} logo" width="240" height="134" loading="lazy" decoding="async"></span>
-    </div>
-    <p class="footer-name">${esc(SITE.name)}</p>
-    <p class="footer-tagline">${esc(SITE.tagline)}</p>
-    <div class="btn-row footer-actions">
-      <a class="btn btn-primary" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>Call ${PRIMARY.phone}</span></a>
-      <a class="btn btn-ghost" href="${R}#contact"><span>Book an appointment</span></a>
-    </div>
-  </div>
   <div class="wrap">
     <div class="footer-top">
+      <div class="footer-brand">
+        <a class="footer-mark" href="${R}./"><span class="footer-face"><img class="footer-logo" src="${R}assets/img/logo-240.png" alt="" width="240" height="134" loading="lazy" decoding="async"></span><span class="footer-name">${esc(SITE.name)}</span></a>
+        <p class="footer-tagline">${esc(SITE.tagline)}</p>
+        <div class="socials" aria-label="Social media (to be confirmed)">
+          <span>Instagram, to be confirmed</span><span>Facebook, to be confirmed</span><span>YouTube, to be confirmed</span>
+        </div>
+      </div>
       <div>
         <h2>${BRANCHES.length > 1 ? 'Branches' : 'Visit'}</h2>
         ${BRANCHES.map(b => `<div class="footer-branch"><strong>${esc(b.name)}</strong>${b.addressLines ? b.addressLines.map(esc).join(', ') : 'Address to be confirmed with client'}</div>`).join('')}
@@ -203,17 +197,10 @@ export const footer = (R = '') => `<footer class="site-footer">
         ${BRANCHES.map(b => `<div class="footer-branch">${b.phone ? `<a href="tel:${b.tel}">${b.phone}</a> <span>Reception</span>` : 'Phone to be confirmed'}${(b.mobiles || []).map(m => `<br><a href="tel:${m.tel}">${m.phone}</a> <span>Mobile</span>`).join('')}</div>`).join('')}
         <div class="footer-branch footer-hours">${PRIMARY.days ? `<strong>OPD, ${PRIMARY.days}</strong>` : ''}${PRIMARY.hours ? PRIMARY.hours.map(([, h]) => h).join(', ') : ''}${EMERGENCY.available24h ? `<strong class="footer-er">Emergency open 24 hours, every day</strong>${EMERGENCY.tel ? `<a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a> <span>Emergency</span>` : ''}` : ''}</div>
       </div>
-      <nav aria-label="Sections">
-        <h2>Sections</h2>
-        <ul>${navItems.map(([id, label]) => `<li><a href="${R}#${id}">${label}</a></li>`).join('')}</ul>
-      </nav>
       <nav aria-label="Departments">
         <h2>Departments</h2>
         <ul>${SERVICES.map(s => `<li><a href="${R}services/${s.slug}/">${esc(s.name)}</a></li>`).join('')}</ul>
       </nav>
-    </div>
-    <div class="socials" aria-label="Social media (to be confirmed)">
-      <span>Instagram, to be confirmed</span><span>Facebook, to be confirmed</span><span>YouTube, to be confirmed</span>
     </div>
     <div class="footer-legal">${pcpndtNote()}</div>
     <div class="footer-bottom">

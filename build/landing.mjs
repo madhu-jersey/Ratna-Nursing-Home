@@ -290,7 +290,7 @@ const reviews = () => `<section id="reviews" class="section reviews" aria-labell
         </div>
         <p>${SITE.rating ? `${SITE.rating} out of 5 from ${SITE.reviewCount} Google reviews` : 'Rating and review count to be confirmed from the Google listing.'}</p>
         ${SITE.googleListing
-          ? `<a class="btn btn-ghost" href="${SITE.googleListing}" target="_blank" rel="noopener"><span>Read all ${SITE.reviewCount || ''} reviews on Google</span><span class="visually-hidden"> (opens in a new tab)</span></a>`
+          ? `<a class="btn btn-ghost" href="${SITE.googleListing}" target="_blank" rel="noopener"><span>All ${SITE.reviewCount || ''} Google reviews</span><span class="visually-hidden"> (opens in a new tab)</span></a>`
           : `<p style="margin:10px 0 0">${tbc('Google listing link to be confirmed')}</p>`}
       </div>
       <div class="carousel reveal" aria-roledescription="carousel" aria-label="Patient reviews">

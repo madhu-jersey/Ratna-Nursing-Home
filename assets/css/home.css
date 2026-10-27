@@ -326,13 +326,14 @@ a.strip-value:hover { color: var(--red); }
 .rating-value { font-family: var(--serif); font-weight: 400; font-size: clamp(3.2rem, 2.6rem + 1.6vw, 4rem); line-height: .9; letter-spacing: -.04em; }
 .stars { display: inline-flex; gap: 4px; color: #B7790A; }
 .stars svg { width: 16px; height: 16px; }
+.rating .btn { white-space: nowrap; }
 .rating p { color: var(--slate); font-size: var(--fs-small); max-width: 34ch; margin: 0; }
 .stars-part { position: relative; display: inline-flex; color: #B7790A; }
 .stars-part .stars-fill { position: absolute; left: 0; top: 0; width: var(--pct); overflow: hidden; }
 .stars-part .stars-fill .stars { flex-wrap: nowrap; }
 /* the gold row is clipped, never squeezed: each star keeps its size under the outline row */
 .stars-part svg { flex: none; }
-.stars-part .stars-fill { height: 100%; white-space: nowrap; }
+.stars-part .stars-fill { display: flex; height: 100%; white-space: nowrap; } /* a block box, so it sits exactly over the outline row */
 .carousel { position: relative; min-width: 0; }
 .carousel-track {
   display: grid; grid-auto-flow: column; grid-auto-columns: minmax(270px, 86%);
@@ -415,7 +416,7 @@ a.strip-value:hover { color: var(--red); }
 
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .seal-dial, .marquee-track, .thread-glint, .rating-dial .dial, .footer-seal .dial, .m-ping { animation: none !important; }
+  .seal-dial, .marquee-track, .thread-glint, .rating-dial .dial, .m-ping { animation: none !important; }
   .js .hero-title .line > span, .js .hero-in, .js .hero-seal, .js .hero-logo, .js .hero-strip::before { animation: none !important; opacity: 1; transform: none; scale: 1; rotate: 0deg; }
   .js .thread-draw { animation: none !important; stroke-dashoffset: 0; stroke-opacity: .3; }
   .hero-seal, .about-float { translate: none !important; transform: none !important; }
@@ -531,7 +532,7 @@ a.strip-value:hover { color: var(--red); }
   .marquee-group { font-size: 1.4rem; gap: 28px; padding-right: 28px; }
 
   /* Things that spin or follow the scroll stay still on phones */
-  .seal-dial, .rating-dial .dial, .footer-seal .dial, .pop-seal .dial { animation: none; }
+  .seal-dial, .rating-dial .dial, .pop-seal .dial { animation: none; }
   .about-float { transform: none !important; }
 
   /* Departments: compact swipe cards */
