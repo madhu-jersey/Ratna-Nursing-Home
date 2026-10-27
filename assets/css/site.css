@@ -485,11 +485,6 @@ p { margin: 0 0 1em; max-width: 68ch; }
 .problem .p-icon svg { width: 24px; height: 24px; }
 .problem h3 { font-size: 1.375rem; font-weight: 600; line-height: 1.15; margin: 0 0 10px; }
 .problem p { margin: 0; color: var(--slate); font-size: 1rem; line-height: 1.65; }
-@media (hover: hover) {
-  .problem:hover { transform: translateY(-4px); border-color: #C9D3E6; }
-  .problem:hover::after { opacity: 1; }
-  .problem:hover .p-icon { background: var(--blush); color: var(--red-hover); }
-}
 
 .why-list { margin: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
 .why-row { display: grid; gap: 6px 40px; padding: 18px 0; border-bottom: 1px solid var(--line); }
@@ -543,12 +538,12 @@ p { margin: 0 0 1em; max-width: 68ch; }
 .svc-other a:hover { border-color: var(--silver); }
 
 /* ---------- Motion: reveals (only once JS confirms motion is OK) ---------- */
-.motion .reveal { opacity: 0; transform: translate3d(0, 56px, 0); transition: opacity 1.2s var(--ease-out), transform 1.5s var(--ease-out); transition-delay: calc(var(--i, 0) * 110ms); }
+.motion .reveal { opacity: 0; transform: translate3d(0, 24px, 0); transition: opacity .9s var(--ease-out), transform 1.1s var(--ease-out); transition-delay: calc(var(--i, 0) * 80ms); }
 .motion .reveal.is-in { opacity: 1; transform: none; }
 /* Section headings rise word by word (site.js wraps each word) */
 .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .1em; margin-bottom: -.1em; }
 .w > span { display: inline-block; }
-.motion .reveal .w > span { transform: translate3d(0, 115%, 0) rotate(3deg); transform-origin: left bottom; transition: transform 1.4s var(--ease-out); transition-delay: calc(var(--wi, 0) * 60ms + 80ms); }
+.motion .reveal .w > span { transform: translate3d(0, 115%, 0) rotate(3deg); transform-origin: left bottom; transition: transform 1.1s var(--ease-out); transition-delay: calc(var(--wi, 0) * 45ms + 60ms); }
 /* Images: a curtain in the section colour lifts away, and the picture settles from a slight zoom */
 .reveal-mask { position: relative; }
 .motion .reveal-mask::after { content: ""; position: absolute; inset: -1px; z-index: 2; pointer-events: none; background: var(--bg); transform-origin: top; transition: transform 1.5s var(--ease-out); transition-delay: calc(var(--i, 0) * 120ms + 100ms); }
@@ -565,8 +560,8 @@ p { margin: 0 0 1em; max-width: 68ch; }
 .motion .reveal.is-in .eyebrow::before { transform: none; }
 /* Cards lift on hover */
 @media (hover: hover) {
-  .doctor, .contact-card, .branch, .review { transition: transform .5s var(--ease-out), box-shadow .5s var(--ease-out); }
-  .doctor:hover, .contact-card:hover, .review:hover { transform: translateY(-5px); box-shadow: 0 22px 44px -24px rgba(22, 50, 75, .35); }
+  .contact-card { transition: box-shadow .5s var(--ease-out); }
+  .contact-card:hover { box-shadow: 0 22px 44px -24px rgba(22, 50, 75, .35); }
 }
 
 /* Smooth scrolling: Lenis drives the native scroll position on desktop */

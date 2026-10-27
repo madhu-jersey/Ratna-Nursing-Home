@@ -99,7 +99,10 @@
         const el = en.target;
         el.classList.add('is-in'); io.unobserve(el);
         // hand transform back to the element (e.g. hover lift) once the entrance is done
-        if (el.classList.contains('reveal')) setTimeout(() => { el.classList.remove('reveal', 'is-in'); el.style.removeProperty('--i'); }, 2200);
+        if (el.classList.contains('reveal')) {
+          const i = parseFloat(el.style.getPropertyValue('--i')) || 0, words = el.querySelectorAll('.w').length;
+          setTimeout(() => { el.classList.remove('reveal', 'is-in'); el.style.removeProperty('--i'); }, Math.max(i * 80 + 1200, words * 45 + 1300));
+        }
       });
     }, { rootMargin: '0px 0px -10% 0px', threshold: .06 });
     $$('.statement-beat').forEach(el => el.classList.add('reveal-draw'));
