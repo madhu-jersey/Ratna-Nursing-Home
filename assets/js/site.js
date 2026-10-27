@@ -389,8 +389,7 @@
     if (!form) return;
     const msg = form.elements.message, branch = form.elements.branch;
     if (branch && a.dataset.branch) branch.value = a.dataset.branch;
-    const pick = a.dataset.service && form.querySelector(`input[name="service"][value="${a.dataset.service}"]`);
-    if (pick) pick.checked = true;
+    if (form.elements.service && a.dataset.service) form.elements.service.value = a.dataset.service;
     if (msg && !msg.value) msg.value = `I would like to book with ${a.dataset.bookDoctor}.`;
   }));
 

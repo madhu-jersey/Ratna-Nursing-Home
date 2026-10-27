@@ -334,13 +334,9 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
           <div class="field"><label for="f-name">Your name <span class="req">(required)</span></label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
           <div class="field"><label for="f-phone">Phone number <span class="req">(required)</span></label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
           <div class="field"><label for="f-email">Email <span class="req">(for your confirmation)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
-          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(required)</span></label><input id="f-date" name="date" type="date" required aria-describedby="h-date e-date"><span class="hint" id="h-date">Monday to Saturday</span><span class="error" id="e-date" aria-live="polite"></span></div>
-          <fieldset class="field field-full pick-field">
-            <legend>Department <span class="req">(optional)</span></legend>
-            <div class="pick-row">
-              ${SERVICES.map(s => `<label class="pick"><input type="radio" name="service" value="${s.slug}"><span>${esc(s.name)}</span></label>`).join('')}
-            </div>
-          </fieldset>
+          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(Mon to Sat)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
+          <div class="field"><label for="f-service">Department <span class="req">(optional)</span></label><select id="f-service" name="service"><option value="">Not sure yet</option>${SERVICES.map(s => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
+          <div class="field"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><input id="f-msg" name="message" placeholder="For example: fever for three days"></div>
           <fieldset class="field field-full slot-field" aria-describedby="e-time">
             <legend>Preferred time <span class="req">(${BOOKING.slotMinutes}-minute appointments)</span></legend>
             ${BOOKING.sessions.map(sess => `<div class="slot-group">
@@ -352,11 +348,12 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
           ${BRANCHES.length > 1
             ? `<div class="field"><label for="f-branch">Branch</label><select id="f-branch" name="branch" required aria-describedby="e-branch"><option value="">Choose a branch</option>${BRANCHES.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select><span class="error" id="e-branch" aria-live="polite"></span></div>`
             : `<input type="hidden" name="branch" value="${BRANCHES[0].id}">`}
-          <div class="field field-full"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><textarea id="f-msg" name="message" rows="2" placeholder="For example: fever and cough for three days" data-lenis-prevent></textarea></div>
         </div>
         ${trapFields('page')}
-        <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
-        <p class="small book-note" id="form-note">This is a request, not a confirmed appointment. You will get an email once the hospital confirms it.</p>
+        <div class="book-foot">
+          <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
+          <p class="small book-note" id="form-note">This is a request, not a confirmed appointment. You will get an email once the hospital confirms it.</p>
+        </div>
         <div id="form-status" class="form-status" role="status" tabindex="-1" hidden></div>
       </form>
 
@@ -365,12 +362,6 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <p>Reception will book you in over the phone.</p>
         ${PRIMARY.phone ? `<a class="book-call-main" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>${PRIMARY.phone}</span></a>` : ''}
         ${PRIMARY.mobiles?.length ? `<div class="book-call-alts">${PRIMARY.mobiles.map(m => `<a class="book-call-alt" href="tel:${m.tel}">${m.phone}</a>`).join('')}</div>` : ''}
-        <div class="book-hours">
-          <p class="book-hours-title">OPD timings${PRIMARY.days ? `, ${PRIMARY.days}` : ''}</p>
-          ${BOOKING.sessions.map(([n, a, b]) => `<p><span>${n}</span>${timeLabel(a)} to ${timeLabel(b)}</p>`).join('')}
-          ${PRIMARY.days ? '<p><span>Sunday</span>OPD closed</p>' : ''}
-          ${EMERGENCY.available24h ? '<p class="book-hours-er"><span>Emergency</span>Open 24 hours, every day</p>' : ''}
-        </div>
         <p class="book-emergency"><strong>Emergency?</strong> Call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a>${EMERGENCY.tel ? ` or <a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>` : ''} or go to the nearest emergency department. Do not use this form.</p>
       </aside>
     </div>
