@@ -336,11 +336,11 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
           <div class="field"><label for="f-email">Email <span class="req">(for your confirmation)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
           <div class="field date-field"><label for="f-date">Preferred day <span class="req">(Mon to Sat)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
           <div class="field"><label for="f-service">Department <span class="req">(optional)</span></label><select id="f-service" name="service"><option value="">Not sure yet</option>${SERVICES.map(s => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
-          <div class="field"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><input id="f-msg" name="message" placeholder="For example: fever for three days"></div>
+          <div class="field"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><input id="f-msg" name="message" placeholder="Fever for three days"></div>
           <fieldset class="field field-full slot-field" aria-describedby="e-time">
             <legend>Preferred time <span class="req">(${BOOKING.slotMinutes}-minute appointments)</span></legend>
             ${BOOKING.sessions.map(sess => `<div class="slot-group">
-              <p class="slot-session"><strong>${sess[0]}</strong> ${timeLabel(sess[1])} to ${timeLabel(sess[2])}</p>
+              <p class="slot-session"><strong>${sess[0]}</strong> <span class="slot-range">${timeLabel(sess[1])} to ${timeLabel(sess[2])}</span></p>
               <div class="slot-row">${sessionSlots(sess).map(t => `<label class="slot"><input type="radio" name="time" value="${t}" required><span>${timeLabel(t)}</span></label>`).join('')}</div>
             </div>`).join('')}
             <span class="error" id="e-time" aria-live="polite"></span>
@@ -362,7 +362,11 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <p>Reception will book you in over the phone.</p>
         ${PRIMARY.phone ? `<a class="book-call-main" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>${PRIMARY.phone}</span></a>` : ''}
         ${PRIMARY.mobiles?.length ? `<div class="book-call-alts">${PRIMARY.mobiles.map(m => `<a class="book-call-alt" href="tel:${m.tel}">${m.phone}</a>`).join('')}</div>` : ''}
-        <p class="book-emergency"><strong>Emergency?</strong> Call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a>${EMERGENCY.tel ? ` or <a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>` : ''} or go to the nearest emergency department. Do not use this form.</p>
+        <dl class="book-times">
+          ${BOOKING.sessions.map(([n, a, b]) => `<div><dt>${n}</dt><dd>${timeLabel(a)} to ${timeLabel(b)}</dd></div>`).join('')}
+          ${PRIMARY.days ? '<div><dt>Sunday</dt><dd>OPD closed</dd></div>' : ''}
+        </dl>
+        <p class="book-emergency"><strong>Emergency?</strong>${EMERGENCY.available24h ? ' Open 24 hours.' : ''} Call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a>${EMERGENCY.tel ? ` or <a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>` : ''}. Do not use this form.</p>
       </aside>
     </div>
   </div>
