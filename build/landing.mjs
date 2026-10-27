@@ -191,13 +191,11 @@ const doctors = () => `<section id="doctors" class="section doctors" aria-labell
 const place = b => `<div class="visit">
   <div class="visit-info">
     <h3 class="visit-name">${esc(b.name)}</h3>
-    <address class="visit-address">${b.addressLines ? b.addressLines.map(esc).join('<br>') : 'Address to be confirmed'}</address>
+    <address class="visit-address">${b.addressLines ? `${esc(b.addressLines[0])}<br>${b.addressLines.slice(1).map(esc).join(', ')}` : 'Address to be confirmed'}</address>
     <dl class="visit-lines">
-      ${b.phone ? `<div><dt>Reception</dt><dd><a href="tel:${b.tel}">${b.phone}</a></dd></div>` : ''}
-      ${b.mobiles?.length ? `<div><dt>Mobile</dt><dd>${b.mobiles.map(m => `<a href="tel:${m.tel}">${m.phone}</a>`).join('')}</dd></div>` : ''}
-      <div><dt>OPD timings</dt><dd>${b.hours ? `<span class="visit-hours">${b.days ? `<span class="visit-days">${b.days}</span>` : ''}${b.hours.map(([d, h]) => `<span><strong>${d}</strong> ${h}</span>`).join('')}</span>` : tbc('To be confirmed')}</dd></div>
-      ${b.days ? '<div><dt>Sunday</dt><dd>OPD closed</dd></div>' : ''}
-      ${EMERGENCY.available24h ? `<div><dt>Emergency</dt><dd><strong class="visit-emergency">Open 24 hours, every day</strong>${EMERGENCY.tel ? `<a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>` : ''}</dd></div>` : ''}
+      ${b.phone || b.mobiles?.length ? `<div><dt>Phone</dt><dd>${b.phone ? `<a href="tel:${b.tel}">${b.phone}</a>` : ''}${(b.mobiles || []).map(m => `<a href="tel:${m.tel}">${m.phone}</a>`).join('')}</dd></div>` : ''}
+      <div><dt>OPD timings</dt><dd>${b.hours ? `<span class="visit-hours">${b.days ? `<span class="visit-days">${b.days}</span>` : ''}${b.hours.map(([d, h]) => `<span><strong>${d}</strong> ${h}</span>`).join('')}${b.days ? '<span><strong>Sunday</strong> OPD closed</span>' : ''}</span>` : tbc('To be confirmed')}</dd></div>
+      ${EMERGENCY.available24h ? `<div><dt>Emergency</dt><dd><strong class="visit-emergency">Open 24 hours</strong>${EMERGENCY.tel ? `<a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>` : ''}</dd></div>` : ''}
     </dl>
     <div class="visit-actions">
       ${b.phone ? `<a class="btn btn-primary" href="tel:${b.tel}">${icon('i-phone')}<span>Call reception</span></a>` : ''}
@@ -335,8 +333,8 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <div class="form-grid">
           <div class="field"><label for="f-name">Your name <span class="req">(required)</span></label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
           <div class="field"><label for="f-phone">Phone number <span class="req">(required)</span></label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
-          <div class="field"><label for="f-email">Email <span class="req">(required)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="h-email e-email"><span class="hint" id="h-email">Your confirmation is sent here.</span><span class="error" id="e-email" aria-live="polite"></span></div>
-          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(required)</span></label><input id="f-date" name="date" type="date" required aria-describedby="h-date e-date"><span class="hint" id="h-date">Monday to Saturday. OPD is closed on Sunday.</span><span class="error" id="e-date" aria-live="polite"></span></div>
+          <div class="field"><label for="f-email">Email <span class="req">(for your confirmation)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
+          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(required)</span></label><input id="f-date" name="date" type="date" required aria-describedby="h-date e-date"><span class="hint" id="h-date">Monday to Saturday</span><span class="error" id="e-date" aria-live="polite"></span></div>
           <fieldset class="field field-full pick-field">
             <legend>Department <span class="req">(optional)</span></legend>
             <div class="pick-row">
@@ -344,8 +342,7 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
             </div>
           </fieldset>
           <fieldset class="field field-full slot-field" aria-describedby="e-time">
-            <legend>Preferred time <span class="req">(required)</span></legend>
-            <p class="slot-note">Each appointment is ${BOOKING.slotMinutes} minutes. Pick a start time within OPD hours.</p>
+            <legend>Preferred time <span class="req">(${BOOKING.slotMinutes}-minute appointments)</span></legend>
             ${BOOKING.sessions.map(sess => `<div class="slot-group">
               <p class="slot-session"><strong>${sess[0]}</strong> ${timeLabel(sess[1])} to ${timeLabel(sess[2])}</p>
               <div class="slot-row">${sessionSlots(sess).map(t => `<label class="slot"><input type="radio" name="time" value="${t}" required><span>${timeLabel(t)}</span></label>`).join('')}</div>
@@ -355,7 +352,7 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
           ${BRANCHES.length > 1
             ? `<div class="field"><label for="f-branch">Branch</label><select id="f-branch" name="branch" required aria-describedby="e-branch"><option value="">Choose a branch</option>${BRANCHES.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select><span class="error" id="e-branch" aria-live="polite"></span></div>`
             : `<input type="hidden" name="branch" value="${BRANCHES[0].id}">`}
-          <div class="field field-full"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><textarea id="f-msg" name="message" rows="3" placeholder="For example: fever and cough for three days" data-lenis-prevent></textarea></div>
+          <div class="field field-full"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><textarea id="f-msg" name="message" rows="2" placeholder="For example: fever and cough for three days" data-lenis-prevent></textarea></div>
         </div>
         ${trapFields('page')}
         <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
@@ -367,7 +364,7 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <h3 id="book-call-title">Prefer to call?</h3>
         <p>Reception will book you in over the phone.</p>
         ${PRIMARY.phone ? `<a class="book-call-main" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>${PRIMARY.phone}</span></a>` : ''}
-        ${(PRIMARY.mobiles || []).map(m => `<a class="book-call-alt" href="tel:${m.tel}">${m.phone}</a>`).join('')}
+        ${PRIMARY.mobiles?.length ? `<div class="book-call-alts">${PRIMARY.mobiles.map(m => `<a class="book-call-alt" href="tel:${m.tel}">${m.phone}</a>`).join('')}</div>` : ''}
         <div class="book-hours">
           <p class="book-hours-title">OPD timings${PRIMARY.days ? `, ${PRIMARY.days}` : ''}</p>
           ${BOOKING.sessions.map(([n, a, b]) => `<p><span>${n}</span>${timeLabel(a)} to ${timeLabel(b)}</p>`).join('')}

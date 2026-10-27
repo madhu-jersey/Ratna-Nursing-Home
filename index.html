@@ -10,10 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap">
-<link rel="stylesheet" href="assets/css/site.css?v=dda937ef13">
-<link rel="stylesheet" href="assets/css/home.css?v=dda937ef13">
+<link rel="stylesheet" href="assets/css/site.css?v=c76812387d">
+<link rel="stylesheet" href="assets/css/home.css?v=c76812387d">
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-<script src="assets/js/site.js?v=dda937ef13" defer></script>
+<script src="assets/js/site.js?v=c76812387d" defer></script>
 </head>
 <body class="home">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -397,13 +397,11 @@
     <div class="places"><div class="visit">
   <div class="visit-info">
     <h3 class="visit-name">Main hospital, Sajjapuram</h3>
-    <address class="visit-address">Peketi Vari Street, Near Railway Over Bridge<br>Sajjapuram<br>Tanuku 534211</address>
+    <address class="visit-address">Peketi Vari Street, Near Railway Over Bridge<br>Sajjapuram, Tanuku 534211</address>
     <dl class="visit-lines">
-      <div><dt>Reception</dt><dd><a href="tel:+918819222250">08819 222250</a></dd></div>
-      <div><dt>Mobile</dt><dd><a href="tel:+918179898615">81798 98615</a><a href="tel:+918309855655">83098 55655</a></dd></div>
-      <div><dt>OPD timings</dt><dd><span class="visit-hours"><span class="visit-days">Monday to Saturday</span><span><strong>Morning</strong> 10 am to 2 pm</span><span><strong>Evening</strong> 5 pm to 8 pm</span></span></dd></div>
-      <div><dt>Sunday</dt><dd>OPD closed</dd></div>
-      <div><dt>Emergency</dt><dd><strong class="visit-emergency">Open 24 hours, every day</strong><a href="tel:+918819222250">08819 222250</a></dd></div>
+      <div><dt>Phone</dt><dd><a href="tel:+918819222250">08819 222250</a><a href="tel:+918179898615">81798 98615</a><a href="tel:+918309855655">83098 55655</a></dd></div>
+      <div><dt>OPD timings</dt><dd><span class="visit-hours"><span class="visit-days">Monday to Saturday</span><span><strong>Morning</strong> 10 am to 2 pm</span><span><strong>Evening</strong> 5 pm to 8 pm</span><span><strong>Sunday</strong> OPD closed</span></span></dd></div>
+      <div><dt>Emergency</dt><dd><strong class="visit-emergency">Open 24 hours</strong><a href="tel:+918819222250">08819 222250</a></dd></div>
     </dl>
     <div class="visit-actions">
       <a class="btn btn-primary" href="tel:+918819222250"><svg class="" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg><span>Call reception</span></a>
@@ -612,8 +610,8 @@
         <div class="form-grid">
           <div class="field"><label for="f-name">Your name <span class="req">(required)</span></label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
           <div class="field"><label for="f-phone">Phone number <span class="req">(required)</span></label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
-          <div class="field"><label for="f-email">Email <span class="req">(required)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="h-email e-email"><span class="hint" id="h-email">Your confirmation is sent here.</span><span class="error" id="e-email" aria-live="polite"></span></div>
-          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(required)</span></label><input id="f-date" name="date" type="date" required aria-describedby="h-date e-date"><span class="hint" id="h-date">Monday to Saturday. OPD is closed on Sunday.</span><span class="error" id="e-date" aria-live="polite"></span></div>
+          <div class="field"><label for="f-email">Email <span class="req">(for your confirmation)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
+          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(required)</span></label><input id="f-date" name="date" type="date" required aria-describedby="h-date e-date"><span class="hint" id="h-date">Monday to Saturday</span><span class="error" id="e-date" aria-live="polite"></span></div>
           <fieldset class="field field-full pick-field">
             <legend>Department <span class="req">(optional)</span></legend>
             <div class="pick-row">
@@ -621,8 +619,7 @@
             </div>
           </fieldset>
           <fieldset class="field field-full slot-field" aria-describedby="e-time">
-            <legend>Preferred time <span class="req">(required)</span></legend>
-            <p class="slot-note">Each appointment is 30 minutes. Pick a start time within OPD hours.</p>
+            <legend>Preferred time <span class="req">(30-minute appointments)</span></legend>
             <div class="slot-group">
               <p class="slot-session"><strong>Morning</strong> 10:00 am to 2:00 pm</p>
               <div class="slot-row"><label class="slot"><input type="radio" name="time" value="10:00" required><span>10:00 am</span></label><label class="slot"><input type="radio" name="time" value="10:30" required><span>10:30 am</span></label><label class="slot"><input type="radio" name="time" value="11:00" required><span>11:00 am</span></label><label class="slot"><input type="radio" name="time" value="11:30" required><span>11:30 am</span></label><label class="slot"><input type="radio" name="time" value="12:00" required><span>12:00 pm</span></label><label class="slot"><input type="radio" name="time" value="12:30" required><span>12:30 pm</span></label><label class="slot"><input type="radio" name="time" value="13:00" required><span>1:00 pm</span></label><label class="slot"><input type="radio" name="time" value="13:30" required><span>1:30 pm</span></label></div>
@@ -633,7 +630,7 @@
             <span class="error" id="e-time" aria-live="polite"></span>
           </fieldset>
           <input type="hidden" name="branch" value="sajjapuram">
-          <div class="field field-full"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><textarea id="f-msg" name="message" rows="3" placeholder="For example: fever and cough for three days" data-lenis-prevent></textarea></div>
+          <div class="field field-full"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><textarea id="f-msg" name="message" rows="2" placeholder="For example: fever and cough for three days" data-lenis-prevent></textarea></div>
         </div>
         <input type="hidden" name="source" value="page"><div class="trap" aria-hidden="true"><label>Company<input name="company" tabindex="-1" autocomplete="off"></label></div>
         <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
@@ -645,7 +642,7 @@
         <h3 id="book-call-title">Prefer to call?</h3>
         <p>Reception will book you in over the phone.</p>
         <a class="book-call-main" href="tel:+918819222250"><svg class="" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg><span>08819 222250</span></a>
-        <a class="book-call-alt" href="tel:+918179898615">81798 98615</a><a class="book-call-alt" href="tel:+918309855655">83098 55655</a>
+        <div class="book-call-alts"><a class="book-call-alt" href="tel:+918179898615">81798 98615</a><a class="book-call-alt" href="tel:+918309855655">83098 55655</a></div>
         <div class="book-hours">
           <p class="book-hours-title">OPD timings, Monday to Saturday</p>
           <p><span>Morning</span>10:00 am to 2:00 pm</p><p><span>Evening</span>5:00 pm to 8:00 pm</p>

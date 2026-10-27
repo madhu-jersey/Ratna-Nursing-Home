@@ -265,22 +265,23 @@ a.strip-value:hover { color: var(--red); }
 /* ---------- Find us: details on the left, a plain sketch map on the right ---------- */
 .visit { display: grid; gap: 20px; padding: 12px; border-radius: calc(var(--r-xl) + 4px); background: var(--white); box-shadow: 0 0 0 1px var(--line), var(--lift); }
 .visit + .visit { margin-top: 24px; }
-@media (min-width: 900px) { .visit { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { .visit { grid-template-columns: 1.1fr .9fr; } }
 .visit-info { padding: clamp(16px, 2.4vw, 28px); }
 .visit-name { font-family: var(--sans); font-size: var(--fs-small); font-weight: 600; color: var(--red); margin: 0 0 10px; }
-.visit-address { font-style: normal; font-family: var(--serif); font-size: clamp(1.3rem, 1.1rem + .6vw, 1.65rem); line-height: 1.3; margin-bottom: 18px; }
-.visit-lines { margin: 0 0 22px; border-top: 1px solid var(--line); }
-.visit-lines > div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.visit-address { font-style: normal; font-family: var(--serif); font-size: clamp(1.2rem, 1.05rem + .45vw, 1.45rem); line-height: 1.35; margin-bottom: 16px; }
+.visit-lines { margin: 0 0 20px; border-top: 1px solid var(--line); }
+.visit-lines > div { display: grid; grid-template-columns: 104px 1fr; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .visit-lines dt { color: var(--slate); font-size: var(--fs-small); }
 .visit-lines dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .visit-lines a { display: inline-flex; align-items: center; min-height: 44px; margin-block: -10px; font-size: 1.05rem; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 5px; transition: text-decoration-color .3s; }
 .visit-lines a:hover { text-decoration-color: var(--red); }
-.visit-hours { display: grid; gap: 2px; font-size: 1rem; }
+.visit-hours { display: grid; gap: 0; font-size: var(--fs-small); }
 .visit-days { font-size: var(--fs-small); color: var(--slate); }
 .visit-emergency { color: var(--red); font-weight: 600; }
 .visit-hours strong { display: inline-block; min-width: 76px; font-weight: 600; color: var(--ink); }
-.visit-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.visit-map { position: relative; min-height: 300px; border-radius: var(--r-xl); overflow: hidden; background: #E9EEF7; }
+.visit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.visit-actions .btn { min-height: 44px; padding: 10px 18px; }
+.visit-map { position: relative; min-height: 280px; border-radius: var(--r-xl); overflow: hidden; background: #E9EEF7; }
 .visit-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .visit-map > .tbc { position: absolute; left: 14px; bottom: 14px; }
 .map-open { position: absolute; left: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 12px; border-radius: 999px; background: var(--white); color: var(--ink); font-size: var(--fs-small); font-weight: 600; text-decoration: none; box-shadow: 0 12px 24px -14px rgba(11, 42, 111, .55); transition: background-color .3s, color .3s; }
@@ -366,7 +367,7 @@ a.strip-value:hover { color: var(--red); }
 /* ---------- Book an appointment: one short form, the phone beside it ---------- */
 .book { --bg: var(--white); background: var(--white); }
 .book-grid { display: grid; gap: 20px; align-items: start; }
-@media (min-width: 960px) { .book-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px; } }
+@media (min-width: 960px) { .book-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px; } .book-call { position: sticky; top: 100px; } }
 .book-form { --text: var(--ink); --muted: var(--slate); --focus: var(--red); padding: clamp(20px, 3vw, 32px); border-radius: calc(var(--r-xl) + 4px); background: var(--paper); }
 .book .form-grid { gap: 16px; }
 .book .field label, .pick-field legend { font-size: var(--fs-small); font-weight: 600; color: var(--ink); }
@@ -376,19 +377,19 @@ a.strip-value:hover { color: var(--red); }
 }
 .book .field input:focus, .book .field select:focus, .book .field textarea:focus { box-shadow: 0 0 0 4px rgba(200, 16, 46, .12); }
 .pick-field { margin: 0; padding: 0; border: 0; min-width: 0; }
-.pick-field legend { padding: 0; margin-bottom: 8px; }
+.pick-field legend { padding: 0; margin-bottom: 6px; }
 .pick-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .pick { position: relative; display: inline-flex; }
 .pick input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
-.pick span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; background: var(--white); border: 1px solid #B9C4D8; font-size: var(--fs-small); font-weight: 500; transition: background-color .35s, color .35s, border-color .35s; }
+.pick span { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--white); border: 1px solid #B9C4D8; font-size: var(--fs-small); font-weight: 500; transition: background-color .35s, color .35s, border-color .35s; }
 .pick:hover span { border-color: var(--ink); }
 .pick input:checked + span { background: var(--ink); border-color: var(--ink); color: var(--white); }
 .pick input:focus-visible + span { outline: 2px solid var(--red); outline-offset: 2px; }
 .pick-field.has-error .pick span { border-color: var(--red); }
 .pick-field .error { margin-top: 8px; }
-.book .field textarea { min-height: 96px; }
-.book-submit { width: 100%; min-height: 54px; margin-top: 22px; font-size: 1rem; }
-.book-note { margin: 12px 0 0; text-align: center; color: var(--slate); max-width: none; }
+.book .field textarea { min-height: 72px; }
+.book-submit { width: 100%; min-height: 52px; margin-top: 20px; font-size: 1rem; }
+.book-note { margin: 10px 0 0; text-align: center; color: var(--slate); max-width: none; }
 
 .book-call { padding: clamp(20px, 2.4vw, 28px); border-radius: calc(var(--r-xl) + 4px); background: var(--ink); color: var(--white); }
 .book-call h3 { font-size: 1.4rem; margin-bottom: 6px; }
@@ -396,7 +397,8 @@ a.strip-value:hover { color: var(--red); }
 .book-call-main { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 54px; border-radius: 999px; background: var(--red); color: var(--white); font-size: 1.1rem; font-weight: 600; text-decoration: none; transition: background-color .3s; }
 .book-call-main:hover { background: var(--red-hover); }
 .book-call-main svg { width: 20px; height: 20px; }
-.book-call-alt { display: flex; align-items: center; justify-content: center; min-height: 48px; margin-top: 8px; border-radius: 999px; border: 1px solid var(--steel); color: var(--white); font-weight: 600; text-decoration: none; transition: border-color .3s, background-color .3s; }
+.book-call-alts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.book-call-alt { display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 999px; border: 1px solid var(--steel); color: var(--white); font-weight: 600; text-decoration: none; transition: border-color .3s, background-color .3s; }
 .book-call-alt:hover { border-color: var(--white); background: rgba(255, 255, 255, .06); }
 .book-emergency { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--steel); font-size: var(--fs-small); color: var(--silver); }
 .book-emergency strong { color: var(--white); }
@@ -468,12 +470,12 @@ a.strip-value:hover { color: var(--red); }
 /* ---------- Booking: day and 30-minute time slots ---------- */
 .book .date-field input { max-width: none; }
 .slot-field { margin: 0; padding: 0; border: 0; min-width: 0; }
-.slot-field legend { padding: 0; margin-bottom: 4px; font-size: var(--fs-small); font-weight: 600; color: var(--ink); }
+.slot-field legend { padding: 0; margin-bottom: 10px; font-size: var(--fs-small); font-weight: 600; color: var(--ink); }
 .slot-note { margin: 0 0 10px; font-size: var(--fs-small); color: var(--slate); }
 .slot-group + .slot-group { margin-top: 10px; }
-.slot-session { margin: 0 0 8px; font-size: var(--fs-small); color: var(--slate); }
+.slot-session { margin: 0 0 6px; font-size: var(--fs-small); color: var(--slate); }
 .slot-session strong { color: var(--ink); margin-right: 6px; }
-.slot-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.slot-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
 .slot { position: relative; display: block; }
 .slot input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
 .slot span { display: flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 10px; background: var(--white); border: 1px solid #B9C4D8; font-size: var(--fs-small); font-weight: 600; font-variant-numeric: tabular-nums; transition: background-color .3s, color .3s, border-color .3s; }
@@ -484,6 +486,12 @@ a.strip-value:hover { color: var(--red); }
 .slot input:disabled + span { background: transparent; border-style: dashed; color: #9AA5BC; text-decoration: line-through; }
 .slot-field.has-error .slot span { border-color: var(--red); }
 .slot-field .error { margin-top: 10px; }
+/* Wider screens: the session name sits beside its row of times */
+@media (min-width: 640px) {
+  .slot-group { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .slot-session { margin: 0; padding-top: 10px; display: grid; line-height: 1.3; font-size: var(--fs-micro); }
+  .slot-session strong { margin: 0; font-size: var(--fs-small); }
+}
 
 /* Timings in the call box */
 .book-hours { margin-top: 18px; padding: 14px 16px; border-radius: 16px; background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
