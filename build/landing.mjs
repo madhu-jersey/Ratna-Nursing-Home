@@ -335,14 +335,14 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <div class="form-grid">
           <div class="field"><label for="f-name">Your name <span class="req">(required)</span></label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
           <div class="field"><label for="f-phone">Phone number <span class="req">(required)</span></label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
-          <div class="field field-full"><label for="f-email">Email <span class="req">(required)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="h-email e-email"><span class="hint" id="h-email">Your confirmation is sent here.</span><span class="error" id="e-email" aria-live="polite"></span></div>
+          <div class="field"><label for="f-email">Email <span class="req">(required)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="h-email e-email"><span class="hint" id="h-email">Your confirmation is sent here.</span><span class="error" id="e-email" aria-live="polite"></span></div>
+          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(required)</span></label><input id="f-date" name="date" type="date" required aria-describedby="h-date e-date"><span class="hint" id="h-date">Monday to Saturday. OPD is closed on Sunday.</span><span class="error" id="e-date" aria-live="polite"></span></div>
           <fieldset class="field field-full pick-field">
             <legend>Department <span class="req">(optional)</span></legend>
             <div class="pick-row">
               ${SERVICES.map(s => `<label class="pick"><input type="radio" name="service" value="${s.slug}"><span>${esc(s.name)}</span></label>`).join('')}
             </div>
           </fieldset>
-          <div class="field field-full date-field"><label for="f-date">Preferred day <span class="req">(required)</span></label><input id="f-date" name="date" type="date" required aria-describedby="h-date e-date"><span class="hint" id="h-date">Monday to Saturday. OPD is closed on Sunday.</span><span class="error" id="e-date" aria-live="polite"></span></div>
           <fieldset class="field field-full slot-field" aria-describedby="e-time">
             <legend>Preferred time <span class="req">(required)</span></legend>
             <p class="slot-note">Each appointment is ${BOOKING.slotMinutes} minutes. Pick a start time within OPD hours.</p>
