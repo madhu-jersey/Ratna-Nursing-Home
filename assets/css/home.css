@@ -17,7 +17,15 @@
 }
 .hero-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .hero-grid { display: grid; gap: clamp(32px, 5vw, 64px); align-items: center; padding-block: clamp(20px, 3.5vw, 48px) clamp(28px, 3.5vw, 48px); }
-@media (min-width: 960px) { .hero-grid { grid-template-columns: 1.25fr .75fr; } }
+@media (min-width: 760px) { .hero-grid { grid-template-columns: 1.25fr .75fr; } }
+/* Tablets: more room for the words; the heartbeat line would cross the paragraph here, so it rests */
+@media (min-width: 760px) and (max-width: 959px) {
+  .hero-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, .6fr); gap: 24px; }
+  .hero-visual { width: 100%; max-width: 300px; }
+  .hero .hero-title { max-width: none; }
+  .hero-thread { display: none; }
+  .strip-value { font-size: 1.05rem; }
+}
 
 .hero .eyebrow { color: var(--slate); }
 .hero-title {
@@ -46,7 +54,6 @@
 
 /* The heartbeat thread */
 .hero-thread { position: absolute; left: 0; width: 100%; top: 46%; height: 100px; translate: 0 -50%; }
-@media (max-width: 959px) { .hero-thread { top: auto; bottom: 150px; translate: none; } }
 .hero-thread path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
 .thread-base { stroke: rgba(11, 42, 111, .08); stroke-width: 1.5; }
 .thread-draw { stroke: var(--red); stroke-width: 2; stroke-opacity: .3; }
@@ -519,13 +526,13 @@ a.strip-value:hover { color: var(--red); }
   .hero-sub { font-size: 1rem; margin-bottom: 22px; }
   .hero .btn-row { display: grid; gap: 10px; }
   .hero .btn { width: 100%; min-height: 52px; }
-  .hero-visual { width: min(230px, 62vw); }
+  .hero-visual { display: none; }
   .hero-thread { display: none; }
   .hero-strip { display: grid; grid-template-columns: 1fr; gap: 0; padding: 4px 0 24px; }
-  .hero-strip li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-  .strip-label { margin: 0; font-size: var(--fs-small); }
-  .strip-value { font-size: 1.05rem; text-align: right; }
-  .strip-sub { margin-left: auto; }
+  .hero-strip li { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .strip-label { flex-basis: 100%; margin: 0 0 2px; font-size: var(--fs-micro); }
+  .strip-value { font-size: 1.1rem; }
+  a.strip-value, .strip-sub { margin-block: -10px; }
   .js .hero-title .line > span { animation-duration: .9s; animation-delay: calc(var(--l) * 70ms + 60ms); }
   .js .hero-in { animation-duration: .7s; animation-delay: calc(var(--d) * 40ms + 80ms); }
   .js .hero-seal { animation-duration: 1s; animation-delay: .15s; }
@@ -555,6 +562,7 @@ a.strip-value:hover { color: var(--red); }
   .flow-num { left: -52px; width: 36px; }
   .flow-rail { left: 17px; }
   .steps-flow { gap: 36px; }
+  .motion .flow-step { opacity: 1; }
   .flow-step h3 { font-size: 1.55rem; margin-bottom: 8px; }
   .flow-step p { font-size: 1rem; }
 
@@ -594,9 +602,9 @@ a.strip-value:hover { color: var(--red); }
   .visit-map { min-height: 240px; border-radius: 18px; }
 
   /* Gallery: one swipeable row */
-  .tabs { display: flex; flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; margin-bottom: 20px; }
+  .tabs { display: flex; flex-wrap: nowrap; width: 100%; margin-bottom: 20px; }
   .tabs::-webkit-scrollbar { display: none; }
-  .tab { flex: none; }
+  .tab { flex: 1 1 auto; padding: 0 8px; }
   .bento { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding: 4px var(--gutter) 12px; scroll-padding-inline: var(--gutter); }
   .bento::-webkit-scrollbar { display: none; }
   .bento > li { flex: none; width: 72vw; max-width: 300px; height: 240px; scroll-snap-align: start; }
@@ -604,7 +612,7 @@ a.strip-value:hover { color: var(--red); }
   /* Reviews: rating beside a smaller dial */
   .reviews-grid { gap: 28px; }
   .rating { grid-template-columns: 128px 1fr; align-items: center; column-gap: 18px; row-gap: 14px; }
-  .rating-dial { width: 128px; grid-row: span 2; }
+  .rating-dial { width: 128px; }
   .rating-face { gap: 6px; }
   .rating-value { font-size: 2.6rem; }
   .stars-part .stars svg, .rating-face .stars svg { width: 12px; height: 12px; }

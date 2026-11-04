@@ -11,7 +11,7 @@
   /* ---------- Smooth scrolling (desktop, motion allowed, library loaded) ---------- */
   let lenis = null;
   if (window.Lenis && motionOK() && finePointer.matches) {
-    lenis = new window.Lenis({ duration: 1.2, easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true });
+    lenis = new window.Lenis({ lerp: .12, smoothWheel: true, wheelMultiplier: 1 });
     const loop = t => { lenis.raf(t); requestAnimationFrame(loop); };
     requestAnimationFrame(loop);
     // In-page links glide too, landing just under the header
