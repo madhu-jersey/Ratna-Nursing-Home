@@ -8,6 +8,7 @@ import { CONTENT } from './services-content.mjs';
 import { landing } from './landing.mjs';
 import { servicePage } from './service-template.mjs';
 import { sitemap, robots } from './seo.mjs';
+import { receptionPage } from './reception.mjs';
 
 const out = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -22,12 +23,14 @@ for (const svc of SERVICES) {
 // For search engines: every page in the sitemap, and robots.txt pointing to it
 await writeFile(join(out, 'sitemap.xml'), sitemap([['', '1.0'], ...SERVICES.map(s => [`services/${s.slug}/`, '0.8'])]));
 await writeFile(join(out, 'robots.txt'), robots());
+// Reception's app (not linked anywhere, kept out of search)
+await writeFile(join(out, 'reception', 'index.html'), receptionPage());
 console.log(`Built index.html, ${SERVICES.length} service pages, sitemap.xml and robots.txt.`);
 
 // Publish only what visitors need; notes, build scripts and the booking script stay out of the live site
 if (process.env.VERCEL || process.env.PUBLISH) {
   const pub = join(out, 'public');
   await rm(pub, { recursive: true, force: true });
-  for (const item of ['index.html', 'services', 'assets', 'sitemap.xml', 'robots.txt']) await cp(join(out, item), join(pub, item), { recursive: true });
+  for (const item of ['index.html', 'services', 'assets', 'reception', 'sitemap.xml', 'robots.txt']) await cp(join(out, item), join(pub, item), { recursive: true });
   console.log('Copied the site into public/ for publishing.');
 }

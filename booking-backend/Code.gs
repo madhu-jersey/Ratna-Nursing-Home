@@ -11,13 +11,15 @@
  *     confirmation to the patient. No email is sent at any point.
  *  4. The Schedule tab (?view=schedule) shows every doctor's appointments for a day in one place, read straight
  *     from their calendars, so changes made in Google Calendar show here too.
+ *  5. The reception app on the website (/reception/) does all of the above in one fast screen. It talks to this
+ *     script through doPost with api=sync, api=approve or api=decline, always with the PIN.
  *
  * The reception PIN is kept in Project Settings > Script properties as RECEPTION_PIN, never in this file.
  * Setup steps are in booking-backend/SETUP.md.
  */
 
 // Shown when the web app URL is opened in a browser, so you can see which code is live
-const VERSION = 'Version 10: one patient per doctor per time';
+const VERSION = 'Version 11: reception app';
 
 const CONFIG = {
   HOSPITAL_NAME: 'Ratna Nursing Home',
@@ -68,6 +70,7 @@ const COL = Object.fromEntries(HEADERS.map((h, i) => [h, i + 1]));
 function doPost(e) {
   const p = (e && e.parameter) || {};
   if (p.company) return json_({ ok: true }); // honeypot: bots fill the hidden field, people never see it
+  if (p.api) return api_(p); // the reception app
 
   const req = {
     // The website makes the ID and secret token, so the approval link can go into the WhatsApp message straight away
@@ -129,41 +132,17 @@ function doGet(e) {
   }
 
   if (p.do === 'approve' || p.do === 'decline') {
-    const sh = sheet_();
-    const decided = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'd MMM yyyy, h:mm a');
     if (p.do === 'approve') {
       const iso = /^\d{4}-\d{2}-\d{2}$/.test(p.cdate || '') ? p.cdate : isoDate_(r.preferred);
-      const date = iso ? prettyDate_(iso) : r.preferred;
-      const time = clean_(p.ctime, 40);
       const doctor = CONFIG.DOCTORS.indexOf(p.doctor) > -1 ? p.doctor : '';
-      let eventNote = 'No doctor chosen, so it is not on a calendar.';
-      if (doctor) {
-        try {
-          const ev = addToCalendar_(r, doctor, iso, time);
-          CacheService.getScriptCache().remove('schedule ' + iso); // the Schedule tab shows it straight away
-          sh.getRange(row, COL['Calendar event']).setValue(ev ? 'Added to ' + doctor + "'s calendar" : 'Not added: date or time missing');
-          eventNote = ev ? `Added to ${esc_(doctor)}'s calendar.` : 'Not added to the calendar: the date or time was missing.';
-        } catch (err) {
-          sh.getRange(row, COL['Calendar event']).setValue('Calendar error: ' + err.message);
-          eventNote = 'Could not add it to the calendar: ' + esc_(err.message);
-        }
-      }
-      sh.getRange(row, COL['Status']).setValue('Approved');
-      sh.getRange(row, COL['Confirmed date']).setValue("'" + date);
-      sh.getRange(row, COL['Confirmed time']).setValue(safe_(time));
-      sh.getRange(row, COL['Decided at']).setValue(decided);
-      sh.getRange(row, COL['Doctor']).setValue(doctor || 'Not assigned');
-      const msg = `Hello ${r.name}, your appointment at ${CONFIG.HOSPITAL_NAME} is confirmed for ${date}${time ? ', ' + time : ''}${doctor ? ' with ' + doctor : ''}.\nAddress: ${CONFIG.HOSPITAL_ADDRESS}.\nPlease bring any earlier reports and prescriptions. To change or cancel, reply here or call ${CONFIG.HOSPITAL_PHONE}.`;
+      const a = approve_(row, r, iso, clean_(p.ctime, 40), doctor);
       return page_({ title: 'Approved', back: p.pin, body:
-        result_('tick', 'Approved', `<strong>${esc_(r.name)}</strong><br>${esc_(dayLabel_(date))}${time ? ', ' + esc_(time) : ''}${doctor ? '<br>' + esc_(doctor) : ''}`) +
-        `<p class="note">${eventNote}</p>` +
-        `<a class="btn wa" href="${waUrl_(r.phone, msg)}" target="_blank" rel="noopener">${ICON.wa}Send confirmation on WhatsApp</a>` +
+        result_('tick', 'Approved', `<strong>${esc_(r.name)}</strong><br>${esc_(dayLabel_(a.date))}${a.time ? ', ' + esc_(a.time) : ''}${doctor ? '<br>' + esc_(doctor) : ''}`) +
+        `<p class="note">${esc_(a.eventNote)}</p>` +
+        `<a class="btn wa" href="${waUrl_(r.phone, a.msg)}" target="_blank" rel="noopener">${ICON.wa}Send confirmation on WhatsApp</a>` +
         listButton_(p.pin) });
     }
-    sh.getRange(row, COL['Status']).setValue('Declined');
-    sh.getRange(row, COL['Decided at']).setValue(decided);
-    const reason = clean_(p.reason, 300);
-    const msg = `Hello ${r.name}, we are not able to confirm your appointment request as sent.${reason ? ' ' + reason : ''} Please reply here or call ${CONFIG.HOSPITAL_PHONE} and we will find a time that works.`;
+    const msg = decline_(row, r, clean_(p.reason, 300));
     return page_({ title: 'Declined', back: p.pin, body:
       result_('cross', 'Declined', `<strong>${esc_(r.name)}</strong>'s booking is declined.`) +
       `<a class="btn wa" href="${waUrl_(r.phone, msg)}" target="_blank" rel="noopener">${ICON.wa}Tell the patient on WhatsApp</a>` +
@@ -255,6 +234,123 @@ function pinGate_(p) {
         f.addEventListener('submit', function () { localStorage.setItem('rnh-pin', f.pin.value); });
       } catch (e) {}
     </script>` });
+}
+
+/* ---------------- Approve and decline (the app and the older screens share these) ---------------- */
+
+// Marks the row approved, puts it on the doctor's calendar, and returns the confirmation to send the patient
+function approve_(row, r, iso, time, doctor) {
+  const sh = sheet_();
+  const date = iso ? prettyDate_(iso) : r.preferred;
+  let eventNote = 'No doctor chosen, so it is not on a calendar.';
+  if (doctor) {
+    try {
+      const ev = addToCalendar_(r, doctor, iso, time);
+      sh.getRange(row, COL['Calendar event']).setValue(ev ? 'Added to ' + doctor + "'s calendar" : 'Not added: date or time missing');
+      eventNote = ev ? `Added to ${doctor}'s calendar.` : 'Not added to the calendar: the date or time was missing.';
+    } catch (err) {
+      sh.getRange(row, COL['Calendar event']).setValue('Calendar error: ' + err.message);
+      eventNote = 'Could not add it to the calendar: ' + err.message;
+    }
+  }
+  sh.getRange(row, COL['Status'], 1, 1).setValue('Approved');
+  sh.getRange(row, COL['Confirmed date']).setValue("'" + date);
+  sh.getRange(row, COL['Confirmed time']).setValue(safe_(time));
+  sh.getRange(row, COL['Decided at']).setValue(decidedNow_());
+  sh.getRange(row, COL['Doctor']).setValue(doctor || 'Not assigned');
+  forgetSchedule_(iso); // the schedule shows it straight away
+  const msg = `Hello ${r.name}, your appointment at ${CONFIG.HOSPITAL_NAME} is confirmed for ${date}${time ? ', ' + time : ''}${doctor ? ' with ' + doctor : ''}.\nAddress: ${CONFIG.HOSPITAL_ADDRESS}.\nPlease bring any earlier reports and prescriptions. To change or cancel, reply here or call ${CONFIG.HOSPITAL_PHONE}.`;
+  return { date, time, eventNote, msg };
+}
+function decline_(row, r, reason) {
+  const sh = sheet_();
+  sh.getRange(row, COL['Status']).setValue('Declined');
+  sh.getRange(row, COL['Decided at']).setValue(decidedNow_());
+  return `Hello ${r.name}, we are not able to confirm your appointment request as sent.${reason ? ' ' + reason : ''} Please reply here or call ${CONFIG.HOSPITAL_PHONE} and we will find a time that works.`;
+}
+function decidedNow_() { return Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'd MMM yyyy, h:mm a'); }
+function forgetSchedule_(iso) {
+  const cache = CacheService.getScriptCache();
+  cache.remove('schedule ' + iso);
+  cache.remove('week ' + Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd'));
+}
+
+/* ---------------- Reception app: one feed with everything, and quick decisions ---------------- */
+
+function api_(p) {
+  const pin = PropertiesService.getScriptProperties().getProperty('RECEPTION_PIN');
+  if (!pin) return json_({ ok: false, error: 'nopin' });
+  // Ten wrong PINs in a row lock the app for 15 minutes, so a PIN cannot be guessed by trying them all
+  const cache = CacheService.getScriptCache(), fails = Number(cache.get('pin fails') || 0);
+  if (fails >= 10) return json_({ ok: false, error: 'locked' });
+  if (String(p.pin || '') !== pin) { cache.put('pin fails', String(fails + 1), 900); return json_({ ok: false, error: 'pin' }); }
+  if (fails) cache.remove('pin fails');
+
+  if (p.api === 'approve' || p.api === 'decline') {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+      const found = findById_(p.id);
+      if (!found) return json_({ ok: false, error: 'missing' });
+      const { row, r } = found;
+      if (r.status !== 'Pending') return json_({ ok: false, error: 'decided', status: r.status });
+      if (p.api === 'decline') { decline_(row, r, clean_(p.reason, 300)); return json_({ ok: true }); }
+      const iso = /^\d{4}-\d{2}-\d{2}$/.test(p.cdate || '') ? p.cdate : '';
+      const t = slots_().indexOf(p.ctime) > -1 ? p.ctime : '';
+      const doctor = CONFIG.DOCTORS.indexOf(p.doctor) > -1 ? p.doctor : '';
+      if (!iso || !t) return json_({ ok: false, error: 'when' });
+      // Another patient already has this doctor at this time
+      if (doctor && (((takenSlots_(r.id)[iso] || {})[doctor] || {})[t] || 0) >= CONFIG.PATIENTS_PER_SLOT) return json_({ ok: false, error: 'taken' });
+      const a = approve_(row, r, iso, timeLabel_(t), doctor);
+      return json_({ ok: true, eventNote: a.eventNote });
+    } finally {
+      lock.releaseLock();
+    }
+  }
+  return json_(feed_());
+}
+
+// Everything the app shows, in one answer: bookings waiting, every doctor's week, and the taken times
+function feed_() {
+  const tz = CONFIG.TIMEZONE, today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  const values = sheet_().getDataRange().getDisplayValues().slice(1);
+  const at = (v, k) => v[COL[k] - 1];
+  const pending = values.filter(v => at(v, 'Status') === 'Pending').reverse().map(v => ({
+    id: at(v, 'Request ID'), name: at(v, 'Name'), phone: at(v, 'Phone'), department: at(v, 'Department'),
+    doctor: CONFIG.DOCTORS.indexOf(at(v, 'Doctor')) > -1 ? at(v, 'Doctor') : '',
+    date: isoDate_(at(v, 'Preferred date')), time: hhmm_(at(v, 'Preferred time')), message: at(v, 'Message'), received: at(v, 'Received')
+  }));
+  return {
+    ok: true, version: VERSION, today, last: dayAfter_(today, CONFIG.DAYS_AHEAD),
+    hospital: { name: CONFIG.HOSPITAL_NAME, phone: CONFIG.HOSPITAL_PHONE, address: CONFIG.HOSPITAL_ADDRESS },
+    sessions: CONFIG.SESSIONS, slotMinutes: CONFIG.SLOT_MINUTES, perSlot: CONFIG.PATIENTS_PER_SLOT,
+    doctors: CONFIG.DOCTORS.map(d => ({ name: d, color: colorOf_(d)[1] })),
+    pending, taken: takenSlots_('', values), schedule: week_(today)
+  };
+}
+
+// Every doctor's appointments from yesterday to the last bookable day, read from their calendars:
+// { '2026-11-12': { 'Dr. ...': [{ t: '10:00', name, dept, phone }] } }. Kept for two minutes; an approval clears it.
+function week_(today) {
+  const tz = CONFIG.TIMEZONE, cache = CacheService.getScriptCache(), key = 'week ' + today;
+  const kept = cache.get(key);
+  if (kept) return JSON.parse(kept);
+  const start = Utilities.parseDate(dayAfter_(today, -1) + ' 00:00', tz, 'yyyy-MM-dd HH:mm');
+  const end = Utilities.parseDate(dayAfter_(today, CONFIG.DAYS_AHEAD + 1) + ' 00:00', tz, 'yyyy-MM-dd HH:mm');
+  const out = {};
+  CONFIG.DOCTORS.forEach(doctor => {
+    const cal = existingCalendar_(doctor);
+    if (!cal) return;
+    cal.getEvents(start, end).filter(e => !e.isAllDayEvent()).forEach(e => {
+      const iso = Utilities.formatDate(e.getStartTime(), tz, 'yyyy-MM-dd');
+      const m = /^(.*?)(?: \((.+)\))?$/.exec(e.getTitle());
+      const day = out[iso] = out[iso] || {}, list = day[doctor] = day[doctor] || [];
+      list.push({ t: Utilities.formatDate(e.getStartTime(), tz, 'HH:mm'), name: m[1], dept: m[2] || '', phone: ((e.getDescription() || '').match(/Phone: (.+)/) || [])[1] || '' });
+    });
+  });
+  Object.keys(out).forEach(d => Object.keys(out[d]).forEach(doc => out[d][doc].sort((a, b) => a.t < b.t ? -1 : 1)));
+  try { cache.put(key, JSON.stringify(out), 120); } catch (e) { /* too big to keep: read fresh next time */ }
+  return out;
 }
 
 /* ---------------- Reception's list of bookings waiting for a decision ---------------- */
@@ -373,9 +469,9 @@ const ICON = (() => {
 // { '2026-11-12': { 'Dr. Valluri Subba Lakshmi': { '10:00': 1 }, ... }, ... }: waiting bookings hold their preferred
 // time, approved ones their confirmed time, declined ones nothing. Bookings with no doctor (from before version 10)
 // hold nothing. `except` leaves one booking out (reception reviewing it).
-function takenSlots_(except) {
+function takenSlots_(except, values) {
   const out = {};
-  sheet_().getDataRange().getDisplayValues().slice(1).forEach(v => {
+  (values || sheet_().getDataRange().getDisplayValues().slice(1)).forEach(v => {
     const status = v[COL['Status'] - 1];
     if (v[COL['Request ID'] - 1] === except || (status !== 'Pending' && status !== 'Approved')) return;
     const approved = status === 'Approved';
@@ -497,6 +593,11 @@ function book_() {
   return made;
 }
 
+function findById_(id) {
+  if (!id) return null;
+  const v = sheet_().getDataRange().getDisplayValues().find((row, i) => i > 0 && row[COL['Request ID'] - 1] === id);
+  return v ? findRequest_(id, v[COL['Token'] - 1]) : null;
+}
 function findRequest_(id, token) {
   if (!id || !token) return null;
   const sh = sheet_();

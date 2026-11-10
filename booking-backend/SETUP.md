@@ -7,9 +7,9 @@ Bookings run entirely through WhatsApp on **81798 98615** (during testing, **707
 2. Taps **Book on WhatsApp**. WhatsApp opens with the request typed out for 81798 98615, and they tap send. At the same moment the website saves the request to the **Appointments** sheet (status *Pending*).
 
 **Reception**
-1. A WhatsApp booking arrives. Open the **Pending bookings** page from the reception phone's home screen (step 4 below sets it up).
-2. Enter the reception PIN. The phone remembers it after the first time.
-3. Tap the new booking (newest is at the top). Check the doctor, date and time, and tap **Approve and add to the calendar**. The row turns *Approved* and the appointment goes on that doctor's calendar.
+1. A WhatsApp booking arrives. Open the **Bookings** app from the reception phone's home screen (step 4b below sets it up).
+2. The first time, enter the reception PIN. The phone remembers it.
+3. Tap the new booking (newest is at the top). Check the doctor, day and time, and tap **Approve**. The row turns *Approved* and the appointment goes on that doctor's calendar.
 4. Tap **Send confirmation on WhatsApp**. The chat with the patient opens with the confirmation written; tap send. (Declining offers a ready-written message too.)
 
 The patient's message carries only their details and a request ID, never a link, so patients never see the reception page. The PIN keeps it to reception. WhatsApp chats here are ordinary chats opened from links: there is no WhatsApp Business API, no account to set up with Meta, and no message charge.
@@ -36,7 +36,7 @@ The PIN lives only here, never in the code, because the website's code is public
 2. For a new deployment: click the gear next to *Select type*, choose **Web app**, set **Execute as: Me** and **Who has access: Anyone**. ("Anyone" lets the website save requests and lets reception open the approval link. It does not give anyone access to the sheet.)
 3. Click **Deploy**, then **Authorize access**. Google warns that the app is unverified because you wrote it yourself: choose **Advanced > Go to (project name)**, then **Allow**. It asks to edit this spreadsheet and to manage your calendars (for the doctors' appointment calendars).
 4. Copy the **Web app URL**. It ends in `/exec`.
-5. Open that URL in a browser. It should say **Version 10: one patient per doctor per time**.
+5. Open that URL in a browser. It should say **Version 11: reception app**.
 
 ## 4. Connect the website
 
@@ -44,19 +44,23 @@ The website already uses `https://script.google.com/macros/s/AKfycby5nvfryN77hhQ
 
 The WhatsApp number on the website is `WHATSAPP` in `build/data.mjs`, and the doctor list is `DOCTORS`. Keep the doctor list in step with `DOCTORS` at the top of `Code.gs`.
 
-## 4b. Put the reception app on reception's phone
+## 4b. Put the Bookings app on reception's phone
 
-1. On the reception phone, open `https://script.google.com/macros/s/AKfycby5nvfryN77hhQnPOOInQ4dlVIn1rTB7vC11l4UZhE-xcr3PhbhdliDxU-tStmvDYMu/exec?view=reception` in Chrome (or Safari on an iPhone).
-2. Enter the PIN. The **Waiting** tab lists every booking still waiting for a decision.
-3. **Now**, on that page (after the PIN), add it to the home screen: in Chrome, the three-dot menu, then **Add to Home screen**; in Safari, the Share button, then **Add to Home Screen**. Name it *Bookings*.
+The reception app lives on the website at **https://ratna-nursing-home.vercel.app/reception/**. It is not linked from the website, search engines are told to skip it, and nothing loads without the PIN.
 
-Adding it after the PIN matters for speed: the saved icon then opens straight to the bookings in one step. Saved before the PIN, every visit loads the PIN screen first and then the bookings. If the icon was added earlier, delete it and add it again this way.
+1. On the reception phone, open that address in Chrome (or Safari on an iPhone).
+2. Enter the PIN. The phone remembers it.
+3. Add it to the home screen: in Chrome, the three-dot menu, then **Install app** or **Add to Home screen**; in Safari, the Share button, then **Add to Home Screen**. It opens full screen, like an app, with the name *Bookings*. Delete any older *Bookings* icon that opens a script.google.com page.
 
-From then on, reception taps **Bookings** whenever a WhatsApp booking comes in, and **Refresh** to see new ones.
+**Why it is fast:** the app loads every waiting booking and every doctor's week in one go, then everything is instant: switching tabs, moving between days, opening a booking. It shows the last bookings the moment it opens and brings them up to date in the background, every 45 seconds while it is open and whenever reception comes back to it. New bookings get a red **New** mark, and the phone buzzes.
 
-**Schedule tab:** every doctor's appointments for one day, in one place: a card per doctor in their own colour, appointments in time order, and the arrows to move between days. Tap an appointment to call the patient. It reads the doctors' Google Calendars, so changes made there show too (within two minutes; an approval shows at once).
+**Waiting tab:** bookings waiting for a decision, newest first. Tap one to see the details, call or WhatsApp the patient, and confirm the doctor, day and time with a tap each. Times the chosen doctor already has are crossed out. **Approve** shows the result straight away; the **Send confirmation on WhatsApp** button turns on a second later, once the booking is saved in the sheet and the doctor's calendar. If saving fails (no internet, or another phone already handled it), the app says so and the booking goes back to Waiting.
 
-Each screen takes a second or two to load: that is Google's web-app service, the same for every Apps Script page.
+**Schedule tab:** every doctor's appointments for a day, a card per doctor in their own colour, with the days from yesterday to six days ahead in a row at the top. Bookings still waiting show in red under their doctor. Tap an appointment to call the patient. It reads the doctors' Google Calendars, so changes made there show within two minutes.
+
+**Lock** (the padlock) forgets the PIN on that phone. Ten wrong PINs in a row lock the app everywhere for 15 minutes.
+
+The older script.google.com pages (`?view=reception` and `?view=schedule`) still work as a backup.
 
 ## 5. Share each doctor's calendar
 
@@ -75,7 +79,7 @@ To use a calendar a doctor already has instead, put its Calendar ID (from that c
 
 1. On your phone, book on the website with your own name and number, a day, and a time under one doctor. Tap **Book on WhatsApp** and send the message.
 2. Check a row appears in the **Appointments** tab with status *Pending* and the doctor.
-3. On the reception phone, open **Bookings** (the Pending bookings page), enter the PIN, tap your booking, check the details, and tap **Approve and add to the calendar**.
+3. On the reception phone, open the **Bookings** app, tap your booking, check the details, and tap **Approve**.
 4. Check the row now says *Approved* and *Added to ... calendar*, that the event is in the doctor's calendar at the right time, and that **Send confirmation on WhatsApp** opens a chat with your number and the confirmation written.
 
 ## Good to know
@@ -86,7 +90,7 @@ To use a calendar a doctor already has instead, put its Calendar ID (from that c
 - **Booking now waits for the time to be secured:** the Book on WhatsApp button checks the doctor's time with the booking service first (a second or two), then opens WhatsApp. If there is no connection, the patient is offered WhatsApp anyway and reception books them by hand.
 
 - **Changing a booking:** move or delete the event in the doctor's calendar, and tell the patient in the WhatsApp chat. The sheet keeps the record of what was approved.
-- **If saving ever fails** (no signal at the moment of booking), the patient's WhatsApp message still has every detail, so reception can book them by hand; that booking just won't be on the Pending bookings page.
+- **If saving ever fails** (no signal at the moment of booking), the patient's WhatsApp message still has every detail, so reception can book them by hand; that booking just won't be in the Bookings app.
 - **Spam protection:** the forms include a hidden field that bots fill in and people never see; those requests are ignored. The same request sent twice is saved once.
 - **Privacy:** the sheet holds patients' names and phone numbers. Share it only with the staff who handle bookings, and do not make it public. Keep the PIN to reception.
 - **Calendar limit:** a normal Gmail account can create about 5,000 calendar events a day, far more than needed.

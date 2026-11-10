@@ -1,0 +1,15 @@
+{
+  "name": "Ratna Nursing Home Bookings",
+  "short_name": "Bookings",
+  "description": "Reception: waiting bookings and every doctor's schedule.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F5FA",
+  "theme_color": "#0B2A6F",
+  "icons": [
+    { "src": "/assets/img/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/assets/img/logo-480.png", "sizes": "480x268", "type": "image/png" }
+  ]
+}
