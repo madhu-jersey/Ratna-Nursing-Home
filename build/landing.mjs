@@ -367,7 +367,7 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <p>Reception will book you in over the phone, or chat on WhatsApp.</p>
         ${PRIMARY.phone ? `<a class="book-call-main" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>${PRIMARY.phone}</span></a>` : ''}
         ${PRIMARY.mobiles?.length ? `<div class="book-call-alts">${PRIMARY.mobiles.map(m => m.whatsapp
-          ? `<a class="book-call-alt is-wa" href="${waLink('Hello Ratna Nursing Home, I would like to book an appointment.')}" target="_blank" rel="noopener">${icon('i-whatsapp')}<span>${m.phone}</span><span class="visually-hidden"> on WhatsApp</span></a>`
+          ? `<a class="book-call-alt is-wa" href="${waLink('Hello Ratna Nursing Home, I would like to book an appointment.')}" target="_blank" rel="noopener">${icon('i-whatsapp')}<span>${WHATSAPP.display}</span><span class="visually-hidden"> on WhatsApp</span></a>`
           : `<a class="book-call-alt" href="tel:${m.tel}">${m.phone}</a>`).join('')}</div>` : ''}
         <dl class="book-times">
           ${BOOKING.sessions.map(([n, a, b]) => `<div><dt>${n}</dt><dd>${timeLabel(a)} to ${timeLabel(b)}</dd></div>`).join('')}

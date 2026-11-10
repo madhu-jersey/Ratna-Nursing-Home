@@ -47,7 +47,8 @@ export const BRANCHES = [
 export const PRIMARY = BRANCHES.find(b => b.primary) || BRANCHES[0];
 
 // Bookings go through this WhatsApp number: the form saves each request, then hands it to a WhatsApp chat here
-export const WHATSAPP = { number: '918179898615', display: '81798 98615' };
+// TESTING: 70750 09876 stands in for the hospital's WhatsApp until launch; then set it back to { number: '918179898615', display: '81798 98615' }
+export const WHATSAPP = { number: '917075009876', display: '70750 09876' };
 export const waLink = text => `https://wa.me/${WHATSAPP.number}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
 
 // Appointment requests go to the Google Apps Script in booking-backend/ (see SETUP.md).
