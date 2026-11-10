@@ -1,5 +1,10 @@
 // Shared site data. Anything unconfirmed is `null` and renders as a labelled placeholder.
 
+// The team's "to be confirmed" and "photo to be supplied" notes on the home page and footer.
+// Off for the live site, so visitors see a finished page; set true to see every note while collecting details.
+// Department pages always keep theirs: there each note qualifies a medical claim. PLACEHOLDERS.md lists everything.
+export const SHOW_NOTES = false;
+
 export const SITE = {
   name: 'Ratna Nursing Home',
   short: 'Ratna',

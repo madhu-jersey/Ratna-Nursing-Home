@@ -1,6 +1,6 @@
 # Placeholders needing hospital input
 
-Each item below shows on the site as a pale blue-grey "to be confirmed" chip, a dashed frame, or a muted "to be confirmed" line. Fill them in `HOSPITAL-DETAILS.md` and ask Claude to apply it, or edit `build/data.mjs` (site-wide facts) and `build/services-content.mjs` (department text) yourself, then run `npm run build`.
+Each item below shows on the site as a pale blue-grey "to be confirmed" chip, a dashed frame, or a muted "to be confirmed" line. On the home page and footer these notes are hidden from visitors; set `SHOW_NOTES = true` in `build/data.mjs` and rebuild to see them all again. Department pages always show theirs. Fill them in `HOSPITAL-DETAILS.md` and ask Claude to apply it, or edit `build/data.mjs` (site-wide facts) and `build/services-content.mjs` (department text) yourself, then run `npm run build`.
 
 ## Verify before publishing
 - [ ] **Facilities list** (outpatient services, inpatient care, general ward, post-operative care, oxygen support, pharmacy, ECG, ultrasound, electronic fetal monitoring). These come from the brochure, so check each one with the hospital.

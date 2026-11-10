@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { SITE, BRANCHES, PRIMARY, SERVICES, LEGAL, EMERGENCY } from './data.mjs';
+import { SITE, BRANCHES, PRIMARY, SERVICES, LEGAL, EMERGENCY, SHOW_NOTES } from './data.mjs';
 
 export const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 export const tbc = (text = 'To be confirmed with client', cls = '') => `<span class="tbc ${cls}">${esc(text)}</span>`;
+// A team note: shown only while SHOW_NOTES is on
+export const note = (text, cls = '') => SHOW_NOTES ? tbc(text, cls) : '';
 export const icon = (id, cls = '') => `<svg class="${cls}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
 
 const sym = (id, body, vb = '0 0 24 24') =>
@@ -178,7 +180,7 @@ export const contactCard = b => `<article class="contact-card${b.confirmed ? '' 
 export const callBar = () => `<div class="call-bar"><a class="btn btn-primary" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>Call now: ${PRIMARY.phone}</span></a></div>`;
 
 /* PC-PNDT statement: shown in the footer and on pregnancy, scan and fertility pages */
-export const pcpndtNote = () => `<p class="legal-note"><strong>PC-PNDT Act.</strong> ${esc(LEGAL.pcpndt)}${LEGAL.pcpndtConfirmed ? '' : ` ${tbc('Match the wording on the hospital notice board', 'tbc-inline')}`}</p>`;
+export const pcpndtNote = () => `<p class="legal-note"><strong>PC-PNDT Act.</strong> ${esc(LEGAL.pcpndt)}${LEGAL.pcpndtConfirmed ? '' : ` ${note('Match the wording on the hospital notice board', 'tbc-inline')}`}</p>`;
 
 /* Footer: closes the page the way the hero opens it, a heartbeat running into the logo's dial */
 export const footer = (R = '') => `<footer class="site-footer">
@@ -187,10 +189,10 @@ export const footer = (R = '') => `<footer class="site-footer">
       <div class="footer-brand">
         <a class="footer-mark" href="${R}./"><span class="footer-face"><img class="footer-logo" src="${R}assets/img/logo-240.png" alt="" width="240" height="134" loading="lazy" decoding="async"></span><span class="footer-name">${esc(SITE.name)}</span></a>
         <p class="footer-tagline">${esc(SITE.tagline)}</p>
-        <div class="socials" aria-label="Social media (to be confirmed)">
+        ${SHOW_NOTES ? `<div class="socials" aria-label="Social media (to be confirmed)">
           <span>Instagram</span><span>Facebook</span><span>YouTube</span>
         </div>
-        <p class="socials-note">Social links to be confirmed</p>
+        <p class="socials-note">Social links to be confirmed</p>` : ''}
       </div>
       <div>
         <h2>${BRANCHES.length > 1 ? 'Branches' : 'Visit'}</h2>
@@ -209,7 +211,7 @@ export const footer = (R = '') => `<footer class="site-footer">
     <div class="footer-legal">${pcpndtNote()}</div>
     <div class="footer-bottom">
       <p>&copy; ${new Date().getFullYear()} ${esc(SITE.name)}. All rights reserved.${SITE.registration ? ` ${esc(SITE.registration)}` : ''}</p>
-      <p>Designed by <span>[studio credit, to be confirmed]</span></p>
+      ${SHOW_NOTES ? '<p>Designed by <span>[studio credit, to be confirmed]</span></p>' : ''}
       <a class="footer-top-link" href="#main"><span>Back to top</span>${icon('i-arrow')}</a>
     </div>
   </div>

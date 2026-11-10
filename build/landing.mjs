@@ -1,5 +1,5 @@
-import { SITE, BRANCHES, PRIMARY, SERVICES, SERVICE_GROUPS, WHY, DOCTORS, FACILITIES, EMERGENCY, REVIEWS, BOOKING, timeLabel, sessionSlots } from './data.mjs';
-import { esc, tbc, icon, sprite, header, footer, head, callBar, serviceMark, dial, BEAT } from './partials.mjs';
+import { SITE, BRANCHES, PRIMARY, SERVICES, SERVICE_GROUPS, WHY, DOCTORS, FACILITIES, EMERGENCY, REVIEWS, BOOKING, SHOW_NOTES, timeLabel, sessionSlots } from './data.mjs';
+import { esc, tbc, note, icon, sprite, header, footer, head, callBar, serviceMark, dial, BEAT } from './partials.mjs';
 import { hospitalLd, faqLd } from './seo.mjs';
 
 const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
@@ -72,7 +72,7 @@ const services = () => `<section id="services" class="section services" aria-lab
         <ul class="tick-list" role="list">${g.items.map(it => `<li>${icon('i-check', 'tick')}${it.slug
           ? `<a href="${R}services/${it.slug}/">${esc(it.text)}</a>`
           : `<span>${esc(it.text)}</span>`}</li>`).join('')}</ul>
-        ${g.facilities && !FACILITIES.verified ? tbc('List to be verified with the hospital') : ''}
+        ${g.facilities && !FACILITIES.verified ? note('List to be verified with the hospital') : ''}
       </article>`).join('')}
     </div>
   </div>
@@ -129,12 +129,12 @@ const about = () => `<section id="about" class="section about" aria-labelledby="
     <div class="about-collage">
       <figure class="photo-ph about-photo reveal-mask" style="margin:0">
         <div class="ph-inner" data-parallax=".1" aria-hidden="true"></div>
-        <figcaption class="ph-label">${icon('i-image', 'ph-glyph')}<span>Hospital photo to be supplied</span><span class="small">Suggested: the front of the hospital in daylight</span></figcaption>
+        <figcaption class="ph-label">${icon('i-image', 'ph-glyph')}${SHOW_NOTES ? '<span>Hospital photo to be supplied</span><span class="small">Suggested: the front of the hospital in daylight</span>' : ''}</figcaption>
       </figure>
       <div class="about-float" data-parallax="-.35">
         <figure class="photo-ph about-photo-sm reveal-mask" style="margin:0;--i:2">
           <div class="ph-inner" aria-hidden="true"></div>
-          <figcaption class="ph-label"><span class="small">Doctors at work, to be supplied</span></figcaption>
+          <figcaption class="ph-label">${SHOW_NOTES ? '<span class="small">Doctors at work, to be supplied</span>' : icon('i-image', 'ph-glyph')}</figcaption>
         </figure>
       </div>
       <div class="about-chip reveal" style="--i:3">
@@ -146,13 +146,13 @@ const about = () => `<section id="about" class="section about" aria-labelledby="
       <p class="eyebrow reveal">About the hospital</p>
       <h2 id="about-title" class="reveal">A family hospital for ${esc(SITE.town)}</h2>
       <p class="reveal">General physicians and gynaecologists work under one roof, so a mother-to-be, a parent with diabetes and a young couple hoping for a child can all be seen by the right doctor, close to home. Scans, reports and follow-ups stay together at one hospital, from the first consultation to discharge.</p>
-      <div class="stats" data-stagger>
+      ${SHOW_NOTES || SITE.stats.some(st => st.value != null) ? `<div class="stats" data-stagger>
         ${SITE.stats.map(st => `<div class="stat">
           <span class="stat-value"${st.value != null ? ` data-count="${st.value}" data-suffix="${st.suffix}" data-confirmed="${st.confirmed}"` : ''}>${st.value != null ? Number(st.value).toLocaleString('en-IN') + st.suffix : '&ndash;'}</span>
           <span class="stat-label">${st.label}</span>
-          ${st.confirmed ? '' : tbc('To be confirmed')}
+          ${st.confirmed ? '' : note('To be confirmed')}
         </div>`).join('')}
-      </div>
+      </div>` : ''}
     </div>
   </div>
 </section>`;
@@ -165,7 +165,7 @@ const doctorCard = d => {
     <div class="doc-photo">
       ${dial('doc-dial', 72)}
       <span class="doc-face"><span class="doc-initials" aria-hidden="true">${esc(initials(d.name))}</span></span>
-      <span class="doc-photo-note">Photo to be supplied</span>
+      ${SHOW_NOTES ? '<span class="doc-photo-note">Photo to be supplied</span>' : ''}
     </div>
     <div class="doc-info">
       <p class="doc-dept">${esc(d.specialty)}</p>
@@ -248,7 +248,7 @@ const gallery = () => `<section id="gallery" class="section gallery is-collapsed
         <p class="eyebrow">Gallery</p>
         <h2 id="gallery-title" class="logo-title">Inside <img class="title-logo" src="${R}assets/img/logo-240.png" alt="${esc(SITE.name)}" width="240" height="134" loading="lazy" decoding="async"></h2>
       </div>
-      <p class="intro reveal">A look at our hospital. Each frame is labelled with the photo it will hold.</p>
+      <p class="intro reveal">A look at our hospital${SHOW_NOTES ? '. Each frame is labelled with the photo it will hold' : ', from the entrance to the wards'}.</p>
     </div>
     <div class="tabs reveal" role="tablist" aria-label="Filter photos">
       ${GALLERY_TABS.map(([f, l], i) =>
@@ -257,9 +257,9 @@ const gallery = () => `<section id="gallery" class="section gallery is-collapsed
     </div>
     <ul id="gallery-grid" class="bento" role="list">
       ${GALLERY.map(([label, cat, size], i) => `<li data-cat="${cat}" class="${size} reveal-mask" style="--i:${i % 4}">
-        <button class="g-item" type="button" data-caption="${label}: photo to be supplied" aria-label="Open ${label} placeholder">
+        <button class="g-item" type="button" data-caption="${label}${SHOW_NOTES ? ': photo to be supplied' : ''}" aria-label="Open ${label}${SHOW_NOTES ? " placeholder" : ""}">
           <span class="photo-ph"><span class="ph-inner" aria-hidden="true"></span>
-            <span class="ph-label">${icon('i-image', 'ph-glyph')}<span class="small">Photo to be supplied</span></span>
+            <span class="ph-label">${icon('i-image', 'ph-glyph')}${SHOW_NOTES ? '<span class="small">Photo to be supplied</span>' : ''}</span>
             <strong class="g-caption">${label}</strong>
           </span>
         </button>
@@ -278,41 +278,68 @@ const gallery = () => `<section id="gallery" class="section gallery is-collapsed
 /* ---------- 7. Google reviews: chosen by the hospital, copied word for word from Google ---------- */
 const stars = (n = 5, filled = 0) => `<span class="stars">${Array.from({ length: n }, (_, i) => icon(i < filled ? 'i-star' : 'i-star-o')).join('')}</span>`;
 const partStars = r => `<span class="stars-part" style="--pct:${(r / 5 * 100).toFixed(1)}%" role="img" aria-label="${r} out of 5 stars">${stars(5, 0)}<span class="stars-fill" aria-hidden="true">${stars(5, 5)}</span></span>`;
-const reviews = () => `<section id="reviews" class="section reviews" aria-labelledby="reviews-title">
+// Which doctors each review names, matched on the spellings patients use ("Amrutharatna", "Subbalakshmi", "Ghanashyam")
+const NAMED = [
+  ['Dr. Valluri Amrutha Ratna', /amrutha/i],
+  ['Dr. Valluri Subba Lakshmi', /subba\s*lakshmi/i],
+  ['Dr. Bikkina Ghana Syam', /ghana\s*s?h?yam/i],
+  ['Dr. Valluri Soma Sekhar', /soma\s*sekhar/i]
+];
+const namedIn = text => NAMED.filter(([, re]) => re.test(text)).map(([n]) => n);
+const shortName = n => n.replace(/^Dr\. (Valluri|Bikkina) /, 'Dr. ');
+const titleCase = s => s.trim().replace(/\b\p{L}/gu, c => c.toUpperCase());
+
+const reviews = () => {
+  const mentions = NAMED.map(([n]) => [n, REVIEWS.filter(r => namedIn(r.text).includes(n)).length]).filter(([, c]) => c).sort((a, b) => b[1] - a[1]);
+  return `<section id="reviews" class="section reviews" aria-labelledby="reviews-title">
   <div class="wrap">
     <div class="section-head">
       <div class="reveal">
         <p class="eyebrow">Google reviews</p>
         <h2 id="reviews-title">What patients say</h2>
       </div>
-      <p class="intro reveal">In their own words, from the hospital's Google listing.</p>
+      <p class="intro reveal">In their own words, copied from the hospital's Google listing.</p>
     </div>
     <div class="reviews-grid">
-      <div class="rating reveal">
-        <div class="rating-dial">
-          ${dial('rating-ring', 72)}
-          <div class="rating-face">
-            <span class="rating-value">${SITE.rating ?? '&ndash;.&ndash;'}</span>
-            ${SITE.rating ? partStars(SITE.rating) : `<span aria-hidden="true">${stars(5, 0)}</span>`}
+      <aside class="rating reveal" aria-label="Google rating">
+        <div class="rating-top">
+          <div class="rating-dial">
+            ${dial('rating-ring', 72)}
+            <div class="rating-face">
+              <span class="rating-value">${SITE.rating ?? '&ndash;.&ndash;'}</span>
+              ${SITE.rating ? partStars(SITE.rating) : `<span aria-hidden="true">${stars(5, 0)}</span>`}
+            </div>
           </div>
+          <p class="rating-line">${SITE.rating ? `<strong>${SITE.rating} out of 5</strong><span>from ${SITE.reviewCount} reviews on Google</span>` : 'Rating to be confirmed from the Google listing.'}</p>
         </div>
-        <p>${SITE.rating ? `${SITE.rating} out of 5 from ${SITE.reviewCount} Google reviews` : 'Rating and review count to be confirmed from the Google listing.'}</p>
+        ${mentions.length ? `<div class="rating-mentions">
+          <h3>Doctors patients name</h3>
+          <ul role="list">${mentions.map(([n, c]) => `<li><span>${esc(shortName(n))}</span><span class="mention-count">${c} of ${REVIEWS.length} reviews</span></li>`).join('')}</ul>
+        </div>` : ''}
         ${SITE.googleListing
-          ? `<a class="btn btn-ghost" href="${SITE.googleListing}" target="_blank" rel="noopener"><span>All ${SITE.reviewCount || ''} Google reviews</span><span class="visually-hidden"> (opens in a new tab)</span></a>`
-          : `<p style="margin:10px 0 0">${tbc('Google listing link to be confirmed')}</p>`}
-      </div>
+          ? `<a class="btn btn-ghost rating-link" href="${SITE.googleListing}" target="_blank" rel="noopener"><span>Read all ${SITE.reviewCount || ''} on Google</span>${icon('i-arrow')}<span class="visually-hidden"> (opens in a new tab)</span></a>`
+          : note('Google listing link to be confirmed')}
+      </aside>
       <div class="carousel reveal" aria-roledescription="carousel" aria-label="Patient reviews">
         <ul class="carousel-track" role="list" tabindex="0" aria-label="Patient reviews, scroll horizontally">
-          ${REVIEWS.map((r, i) => `<li aria-roledescription="slide" aria-label="${i + 1} of ${REVIEWS.length}">
+          ${REVIEWS.map((r, i) => {
+            const named = namedIn(r.text);
+            return `<li aria-roledescription="slide" aria-label="${i + 1} of ${REVIEWS.length}">
             <article class="review">
+              <div class="review-top">
+                <span role="img" aria-label="5 out of 5 stars">${stars(5, 5)}</span>
+                <svg class="review-quote" viewBox="0 0 32 24" aria-hidden="true"><path d="M0 24V14C0 6 4.6 1.2 12 0l1.4 3.4C8.8 5 6.8 8 6.6 12H12v12zm18 0V14c0-8 4.6-12.8 12-14l1.4 3.4c-4.6 1.6-6.6 4.6-6.8 8.6H30v12z"/></svg>
+              </div>
+              <blockquote class="review-text" id="review-${i}">${r.text.split(/\n+/).map(t => `<p>${esc(t)}</p>`).join('')}</blockquote>
+              <button class="review-more" type="button" aria-expanded="false" aria-controls="review-${i}" hidden>Read more</button>
               <div class="review-head">
                 <span class="review-avatar" aria-hidden="true">${esc(r.name.trim()[0].toUpperCase())}</span>
-                <span class="review-who"><span class="review-name">${esc(r.name)}</span><span class="review-src">Google review</span></span>
+                <span class="review-who"><span class="review-name">${esc(titleCase(r.name))}</span><span class="review-src">Google review</span></span>
               </div>
-              <span role="img" aria-label="5 out of 5 stars">${stars(5, 5)}</span>
-              <blockquote>${r.text.split(/\n+/).map(t => `<p>${esc(t)}</p>`).join('')}</blockquote>
+              ${named.length ? `<p class="review-tag">${icon('i-person')}<span>Names ${named.map(n => esc(shortName(n))).join(' and ')}</span></p>` : ''}
             </article>
-          </li>`).join('')}
+          </li>`;
+          }).join('')}
         </ul>
         <div class="carousel-controls">
           <button class="icon-btn" type="button" data-dir="-1" aria-label="Previous review">${icon('i-left')}</button>
@@ -324,6 +351,7 @@ const reviews = () => `<section id="reviews" class="section reviews" aria-labell
     </div>
   </div>
 </section>`;
+};
 
 /* ---------- 8. Book an appointment: one short form, with the phone beside it ---------- */
 const svcFor = specialty => SERVICES.find(s => s.name === specialty)?.slug || '';

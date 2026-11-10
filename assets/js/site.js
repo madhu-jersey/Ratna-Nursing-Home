@@ -354,6 +354,28 @@
     });
   }
 
+  /* ---------- Reviews: long ones fold at seven lines, with "Read more" to open them ---------- */
+  const reviewTexts = $$('.review-text');
+  const fold = () => reviewTexts.forEach(t => {
+    const btn = t.nextElementSibling;
+    if (!btn?.classList.contains('review-more') || t.classList.contains('is-open')) return;
+    const long = t.scrollHeight > t.clientHeight + 4;
+    t.classList.toggle('is-clamped', long);
+    btn.hidden = !long;
+  });
+  reviewTexts.forEach(t => {
+    const btn = t.nextElementSibling;
+    btn?.addEventListener('click', () => {
+      const open = !t.classList.contains('is-open');
+      t.style.setProperty('--full', `${t.scrollHeight}px`);
+      t.classList.toggle('is-open', open);
+      t.classList.toggle('is-clamped', !open);
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = open ? 'Show less' : 'Read more';
+    });
+  });
+  if (reviewTexts.length) { fold(); document.fonts?.ready.then(fold); addEventListener('resize', () => requestAnimationFrame(fold)); }
+
   /* ---------- Review carousel: drag with momentum, auto-advance, pause on hover ---------- */
   $$('.carousel').forEach(car => {
     const track = $('.carousel-track', car);
