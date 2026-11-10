@@ -3,7 +3,7 @@
 Bookings run entirely through WhatsApp on **81798 98615** (during testing, **70750 09876**; see `WHATSAPP` in `build/data.mjs`). No email is used. Every request is also saved in a Google Sheet, and approved appointments go on each doctor's Google Calendar.
 
 **Patient (two steps)**
-1. Fills in the booking form: name, phone, day and time, and optionally a doctor, department and a note.
+1. Fills in the booking form: name and phone, then a day. Each doctor then shows with their own free times for that day, and the patient taps a time under the doctor they want (the doctor sets the department). A note is optional.
 2. Taps **Book on WhatsApp**. WhatsApp opens with the request typed out for 81798 98615, and they tap send. At the same moment the website saves the request to the **Appointments** sheet (status *Pending*).
 
 **Reception**
@@ -36,7 +36,7 @@ The PIN lives only here, never in the code, because the website's code is public
 2. For a new deployment: click the gear next to *Select type*, choose **Web app**, set **Execute as: Me** and **Who has access: Anyone**. ("Anyone" lets the website save requests and lets reception open the approval link. It does not give anyone access to the sheet.)
 3. Click **Deploy**, then **Authorize access**. Google warns that the app is unverified because you wrote it yourself: choose **Advanced > Go to (project name)**, then **Allow**. It asks to edit this spreadsheet and to manage your calendars (for the doctors' appointment calendars).
 4. Copy the **Web app URL**. It ends in `/exec`.
-5. Open that URL in a browser. It should say **Version 8: all doctors' schedule, faster**.
+5. Open that URL in a browser. It should say **Version 10: one patient per doctor per time**.
 
 ## 4. Connect the website
 
@@ -73,12 +73,17 @@ To use a calendar a doctor already has instead, put its Calendar ID (from that c
 
 ## 6. Test it
 
-1. On your phone, book on the website with your own name and number, and choose a doctor. Tap **Book on WhatsApp** and send the message.
+1. On your phone, book on the website with your own name and number, a day, and a time under one doctor. Tap **Book on WhatsApp** and send the message.
 2. Check a row appears in the **Appointments** tab with status *Pending* and the doctor.
 3. On the reception phone, open **Bookings** (the Pending bookings page), enter the PIN, tap your booking, check the details, and tap **Approve and add to the calendar**.
 4. Check the row now says *Approved* and *Added to ... calendar*, that the event is in the doctor's calendar at the right time, and that **Send confirmation on WhatsApp** opens a chat with your number and the confirmation written.
 
 ## Good to know
+
+- **Booking window:** patients can book today and the next six days, Monday to Saturday. Change `DAYS_AHEAD` at the top of `Code.gs` and `DAYS_AHEAD` in `assets/js/site.js` together.
+- **One patient per doctor per time:** once a doctor's time is booked (waiting or approved), it is greyed out under that doctor on the website and the booking service refuses it. The same time with another doctor stays free. On the approval screen, the time list marks the times the chosen doctor already has, and follows along if reception changes the doctor or date. A declined booking frees its time; approving at a different time or with a different doctor moves the hold. `PATIENTS_PER_SLOT` in `Code.gs` sets how many patients one doctor can see at one time.
+- **A doctor is required:** every booking from the website names a doctor. Bookings saved before version 10 with *No preference* do not hold a time.
+- **Booking now waits for the time to be secured:** the Book on WhatsApp button checks the doctor's time with the booking service first (a second or two), then opens WhatsApp. If there is no connection, the patient is offered WhatsApp anyway and reception books them by hand.
 
 - **Changing a booking:** move or delete the event in the doctor's calendar, and tell the patient in the WhatsApp chat. The sheet keeps the record of what was approved.
 - **If saving ever fails** (no signal at the moment of booking), the patient's WhatsApp message still has every detail, so reception can book them by hand; that booking just won't be on the Pending bookings page.

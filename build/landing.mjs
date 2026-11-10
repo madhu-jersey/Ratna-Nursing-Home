@@ -322,6 +322,9 @@ const reviews = () => {
 /* ---------- 8. Book an appointment: one short form, with the phone beside it ---------- */
 const shortTime = hhmm => { const [h, m] = hhmm.split(':').map(Number); return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'am' : 'pm'}`; };
 const svcFor = specialty => SERVICES.find(s => s.name === specialty)?.slug || '';
+// The doctors patients can book, and what each time choice carries about its doctor
+const bookable = () => DOCTORS.filter(d => d.name);
+const docData = d => `data-doctor="${esc(d.name)}" data-service="${svcFor(d.specialty)}" data-specialty="${esc(d.specialty)}"`;
 const contact = () => `<section id="contact" class="section book" aria-labelledby="contact-title">
   <div class="wrap">
     <div class="section-head">
@@ -329,24 +332,27 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <p class="eyebrow">Appointments</p>
         <h2 id="contact-title">Book an appointment</h2>
       </div>
-      <p class="intro reveal">Choose a time, then send your request on WhatsApp to ${WHATSAPP.display}. Reception confirms it in the same chat.</p>
+      <p class="intro reveal">Pick a day, then a doctor's free time, and send your request on WhatsApp to ${WHATSAPP.display}. Reception confirms it in the same chat.</p>
     </div>
     <div class="book-grid">
       <form id="appointment-form" class="book-form reveal" action="#" method="post" aria-describedby="form-note" ${bookingAttrs()}>
         <div class="form-grid">
           <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
           <div class="field"><label for="f-phone">Phone number</label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
-          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(Mon to Sat)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
-          <div class="field"><label for="f-service">Department <span class="req">(optional)</span></label><select id="f-service" name="service"><option value="">Not sure yet</option>${SERVICES.map(s => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
-          <div class="field"><label for="f-doctor">Doctor <span class="req">(optional)</span></label><select id="f-doctor" name="doctor"><option value="">No preference</option>${DOCTORS.filter(d => d.name).map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join('')}</select></div>
+          <div class="field date-field"><label for="f-date">Preferred day <span class="req">(within 7 days)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
           <div class="field field-note"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><input id="f-msg" name="message" placeholder="Fever for three days"></div>
-          <fieldset class="field field-full slot-field" aria-describedby="e-time">
-            <legend>Preferred time <span class="req">(${BOOKING.slotMinutes}-minute appointments)</span></legend>
-            <div class="session-switch" role="group" aria-label="Session" hidden>${BOOKING.sessions.map((sess, i) => `<button class="session-btn" type="button" aria-pressed="${i === 0}" aria-controls="slots-${i}">${sess[0]}<span>${shortTime(sess[1])} to ${shortTime(sess[2])}</span></button>`).join('')}</div>
-            ${BOOKING.sessions.map((sess, i) => `<div class="slot-group" id="slots-${i}">
-              <p class="slot-session"><strong>${sess[0]}</strong> <span class="slot-range">${timeLabel(sess[1])} to ${timeLabel(sess[2])}</span></p>
-              <div class="slot-row">${sessionSlots(sess).map(t => `<label class="slot"><input type="radio" name="time" value="${t}" required><span>${timeLabel(t)}</span></label>`).join('')}</div>
-            </div>`).join('')}
+          <fieldset class="field field-full slot-field doc-pick" aria-describedby="e-time">
+            <legend>Doctor and time <span class="req">(${BOOKING.slotMinutes}-minute appointments)</span></legend>
+            <p class="pick-hint">Choose a day, and each doctor's free times for that day show here.</p>
+            <div class="pick-body" hidden>
+              <div class="session-switch" role="group" aria-label="Session">${BOOKING.sessions.map((sess, i) => `<button class="session-btn" type="button" aria-pressed="${i === 0}" data-sess="${i}">${sess[0]}<span>${shortTime(sess[1])} to ${shortTime(sess[2])}</span></button>`).join('')}</div>
+              <div class="pick-docs">${bookable().map(d => `<div class="pick-doc" data-doctor="${esc(d.name)}">
+                <p class="pick-name"><strong>${esc(d.name)}</strong><span>${esc(d.specialty)}</span></p>
+                ${BOOKING.sessions.map((sess, i) => `<div class="slot-row" data-sess="${i}" role="group" aria-label="${esc(d.name)}, ${sess[0].toLowerCase()}">${sessionSlots(sess).map(t => `<label class="slot"><input type="radio" name="time" value="${t}" ${docData(d)} required><span>${timeLabel(t)}</span></label>`).join('')}</div>`).join('')}
+                <p class="pick-none" hidden>No free times in this session.</p>
+              </div>`).join('')}</div>
+            </div>
+            <input type="hidden" name="doctor"><input type="hidden" name="service">
             <span class="error" id="e-time" aria-live="polite"></span>
           </fieldset>
           ${BRANCHES.length > 1
@@ -393,20 +399,21 @@ const bookingPopup = () => `<div id="book-pop" class="book-pop" role="dialog" ar
       <span class="pop-seal">${dial('pop-dial', 48)}<img src="${R}assets/img/logo-240.png" alt="" width="240" height="134" loading="lazy" decoding="async"></span>
       <div>
         <h2 id="pop-title">Book an appointment</h2>
-        <p>Leave your details, then send them to us on WhatsApp.</p>
+        <p>Pick a doctor and a free time, then send it to us on WhatsApp.</p>
       </div>
     </div>
     <form class="pop-form" action="#" method="post" ${bookingAttrs()}>
       <div class="field"><label for="p-name">Your name</label><input id="p-name" name="name" autocomplete="name" required aria-describedby="pe-name"><span class="error" id="pe-name" aria-live="polite"></span></div>
       <div class="field"><label for="p-phone">Phone number</label><input id="p-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="pe-phone"><span class="error" id="pe-phone" aria-live="polite"></span></div>
+      <div class="field"><label for="p-doctor">Doctor</label>
+        <select id="p-doctor" name="doctor" required aria-describedby="pe-doctor"><option value="">Choose a doctor</option>${bookable().map(d => `<option value="${esc(d.name)}" ${docData(d)}>${esc(d.name)}, ${esc(d.specialty)}</option>`).join('')}</select><span class="error" id="pe-doctor" aria-live="polite"></span></div>
+      <input type="hidden" name="service">
       <div class="pop-pair">
         <div class="field date-field"><label for="p-date">Day</label><input id="p-date" name="date" type="date" required aria-describedby="pe-date"><span class="error" id="pe-date" aria-live="polite"></span></div>
         <div class="field"><label for="p-time">Time</label>
           <select id="p-time" name="time" required aria-describedby="pe-time"><option value="">Choose a time</option>${BOOKING.sessions.map(sess => `<optgroup label="${sess[0]}, ${timeLabel(sess[1])} to ${timeLabel(sess[2])}">${sessionSlots(sess).map(t => `<option value="${t}">${timeLabel(t)}</option>`).join('')}</optgroup>`).join('')}</select><span class="error" id="pe-time" aria-live="polite"></span></div>
       </div>
       <p class="pop-hours">OPD ${PRIMARY.days || ''}: ${BOOKING.sessions.map(([, a, b]) => `${timeLabel(a)} to ${timeLabel(b)}`).join(' and ')}. ${BOOKING.slotMinutes}-minute appointments.</p>
-      <div class="field"><label for="p-service">Department <span class="req">(optional)</span></label>
-        <select id="p-service" name="service"><option value="">Choose a department</option>${SERVICES.map(s => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
       ${trapFields('popup')}
       <button class="btn wa-btn pop-submit" type="submit">${icon('i-whatsapp')}<span class="submit-label">Book on WhatsApp</span></button>
       <div class="form-status" role="status" tabindex="-1" hidden></div>

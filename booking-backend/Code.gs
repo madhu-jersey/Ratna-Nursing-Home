@@ -17,7 +17,7 @@
  */
 
 // Shown when the web app URL is opened in a browser, so you can see which code is live
-const VERSION = 'Version 8: all doctors\' schedule, faster';
+const VERSION = 'Version 10: one patient per doctor per time';
 
 const CONFIG = {
   HOSPITAL_NAME: 'Ratna Nursing Home',
@@ -26,6 +26,11 @@ const CONFIG = {
   // Bookable OPD sessions (Monday to Saturday), split into 30-minute appointments. Keep in step with BOOKING in build/data.mjs.
   SESSIONS: [['Morning', '10:00', '14:00'], ['Evening', '17:00', '20:00']],
   SLOT_MINUTES: 30,
+  // Patients can book today and up to this many days ahead (6 = a week, today included)
+  DAYS_AHEAD: 6,
+  // How many patients one doctor can see at one time. 1 = once a doctor's time is booked, nobody else can take
+  // it with that doctor (another doctor's same time stays free).
+  PATIENTS_PER_SLOT: 1,
   SHEET_NAME: 'Appointments',
   // Optional. Only needed when this script is NOT opened from the sheet (Extensions > Apps Script):
   // paste the sheet's ID, the long code in its address between /d/ and /edit. Left empty, a script made
@@ -80,8 +85,10 @@ function doPost(e) {
   const errors = [];
   if (req.name.length < 2) errors.push('name');
   if (!/^[+\d][\d\s-]{8,15}$/.test(req.phone)) errors.push('phone');
-  if (!req.date || isSunday_(req.date)) errors.push('date');
+  const today = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd');
+  if (!req.date || isSunday_(req.date) || req.date < today || req.date > dayAfter_(today, CONFIG.DAYS_AHEAD)) errors.push('date');
   if (!req.time) errors.push('time');
+  if (!req.doctor) errors.push('doctor');
   if (errors.length) return json_({ ok: false, errors, version: VERSION });
 
   const lock = LockService.getScriptLock();
@@ -89,6 +96,7 @@ function doPost(e) {
   try {
     // The same request sent twice (a double tap, a retry) is saved once
     if (!findRequest_(req.id, req.token)) {
+      if (((takenSlots_()[req.date] || {})[req.doctor] || {})[req.time] >= CONFIG.PATIENTS_PER_SLOT) return json_({ ok: false, errors: ['taken'], version: VERSION });
       sheet_().appendRow([req.id, new Date(), 'Pending', safe_(req.name), "'" + req.phone, '', req.department,
         "'" + prettyDate_(req.date), "'" + timeLabel_(req.time), safe_(req.message), '', '', '', req.source, req.token, req.doctor || 'No preference', '']);
     }
@@ -104,6 +112,7 @@ function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.view === 'reception') return pinGate_(p) || pendingPage_(p.pin);
   if (p.view === 'schedule') return pinGate_(p) || schedulePage_(p.pin, p.day);
+  if (p.view === 'slots') return slotsJson_();
   if (!p.id) return page_({ title: 'Booking service', body: `<section class="card"><p>The ${CONFIG.HOSPITAL_NAME} booking service is running.</p><p class="muted">${VERSION}</p></section>` });
 
   // Every booking screen is reception's: the PIN comes first
@@ -166,6 +175,8 @@ function doGet(e) {
   const url = ScriptApp.getService().getUrl();
   const iso = isoDate_(r.preferred);
   const hidden = `<input type="hidden" name="id" value="${esc_(r.id)}"><input type="hidden" name="t" value="${esc_(p.t)}"><input type="hidden" name="pin" value="${esc_(p.pin)}">`;
+  const takenAll = takenSlots_(r.id); // other patients' times, by day and doctor
+  const taken = (takenAll[iso] || {})[r.doctor] || {};
   const row_ = (k, v, wide) => `<div${wide ? ' class="wide"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`;
   return page_({ title: 'New booking', back: p.pin, body: `
     <section class="card">
@@ -191,9 +202,25 @@ function doGet(e) {
       <h3>Confirm the appointment</h3>
       <label>Doctor<select name="doctor"><option value="">Not assigned (no calendar)</option>${CONFIG.DOCTORS.map(d => `<option${d === r.doctor ? ' selected' : ''}>${esc_(d)}</option>`).join('')}</select></label>
       <label>Date<input type="date" name="cdate" value="${iso}" required></label>
-      <label>Time<select name="ctime">${CONFIG.SESSIONS.map(sess => `<optgroup label="${sess[0]}">${slots_([sess]).map(t => `<option${timeLabel_(t) === r.preferredTime ? ' selected' : ''}>${timeLabel_(t)}</option>`).join('')}</optgroup>`).join('')}</select></label>
+      <label>Time<select name="ctime">${CONFIG.SESSIONS.map(sess => `<optgroup label="${sess[0]}">${slots_([sess]).map(t => { const own = timeLabel_(t) === r.preferredTime, full = (taken[t] || 0) >= CONFIG.PATIENTS_PER_SLOT; return `<option value="${timeLabel_(t)}" data-t="${t}"${own ? ' selected' : ''}${full ? ' disabled' : ''}>${timeLabel_(t)}${full ? ' (booked)' : ''}</option>`; }).join('')}</optgroup>`).join('')}</select></label>
       <button class="btn primary" name="do" value="approve">${ICON.tick}Approve and add to calendar</button>
     </form>
+    <script>
+      // Times the chosen doctor already has on the chosen day are marked booked
+      (function () {
+        var taken = ${JSON.stringify(takenAll).replace(/</g, '\\u003c')}, max = ${CONFIG.PATIENTS_PER_SLOT};
+        var f = document.querySelector('select[name="ctime"]').form;
+        function sync() {
+          var day = taken[f.cdate.value] || {}, doc = day[f.doctor.value] || {};
+          [].forEach.call(f.ctime.options, function (o) {
+            var full = !!f.doctor.value && (doc[o.dataset.t] || 0) >= max;
+            o.disabled = full; o.textContent = o.value + (full ? ' (booked)' : '');
+          });
+          if (f.ctime.selectedOptions[0] && f.ctime.selectedOptions[0].disabled) f.ctime.value = '';
+        }
+        f.doctor.addEventListener('change', sync); f.cdate.addEventListener('change', sync); sync();
+      })();
+    </script>
     <details class="card">
       <summary>Decline this booking ${ICON.down}</summary>
       <form method="get" action="${url}" target="_top">
@@ -340,6 +367,52 @@ const ICON = (() => {
     refresh: i('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>')
   };
 })();
+
+/* ---------------- Taken times ---------------- */
+
+// { '2026-11-12': { 'Dr. Valluri Subba Lakshmi': { '10:00': 1 }, ... }, ... }: waiting bookings hold their preferred
+// time, approved ones their confirmed time, declined ones nothing. Bookings with no doctor (from before version 10)
+// hold nothing. `except` leaves one booking out (reception reviewing it).
+function takenSlots_(except) {
+  const out = {};
+  sheet_().getDataRange().getDisplayValues().slice(1).forEach(v => {
+    const status = v[COL['Status'] - 1];
+    if (v[COL['Request ID'] - 1] === except || (status !== 'Pending' && status !== 'Approved')) return;
+    const approved = status === 'Approved';
+    const iso = isoDate_(v[COL[approved ? 'Confirmed date' : 'Preferred date'] - 1]);
+    const t = hhmm_(v[COL[approved ? 'Confirmed time' : 'Preferred time'] - 1]);
+    const doctor = v[COL['Doctor'] - 1];
+    if (!iso || !t || CONFIG.DOCTORS.indexOf(doctor) < 0) return;
+    const day = (out[iso] ||= {}), doc = (day[doctor] ||= {});
+    doc[t] = (doc[t] || 0) + 1;
+  });
+  return out;
+}
+
+// For the website: the bookable days, and each doctor's full times on them (no names or numbers)
+// { today, last, full: { '2026-11-12': { 'Dr. Valluri Subba Lakshmi': ['10:00'] } } }
+function slotsJson_() {
+  const today = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd');
+  const last = dayAfter_(today, CONFIG.DAYS_AHEAD), all = takenSlots_(), full = {};
+  Object.keys(all).filter(d => d >= today && d <= last).forEach(d => {
+    Object.keys(all[d]).forEach(doctor => {
+      const times = Object.keys(all[d][doctor]).filter(t => all[d][doctor][t] >= CONFIG.PATIENTS_PER_SLOT);
+      if (times.length) (full[d] ||= {})[doctor] = times;
+    });
+  });
+  return json_({ ok: true, today, last, full });
+}
+
+// "5:30 pm" -> "17:30"
+function hhmm_(label) {
+  const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(label || '');
+  return m ? String((Number(m[1]) % 12) + (m[3].toLowerCase() === 'pm' ? 12 : 0)).padStart(2, '0') + ':' + m[2] : '';
+}
+// "2026-11-12", 6 -> "2026-11-18"
+function dayAfter_(iso, n) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return Utilities.formatDate(new Date(Date.UTC(y, m - 1, d + n, 12)), 'UTC', 'yyyy-MM-dd');
+}
 
 /* ---------------- Doctors' calendars ---------------- */
 

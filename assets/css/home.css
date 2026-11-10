@@ -333,8 +333,7 @@ a.strip-value:hover { color: var(--red); }
   .book-call .book-emergency { margin-top: auto; }
 }
 @media (min-width: 1100px) {
-  .book .form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } /* two rows of fields: details, then choices and the note */
-  .book .field-note { grid-column: span 3; }
+  .book .form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } /* one row of details, then the doctors and their times */
   .book .slot-row { grid-template-columns: repeat(8, minmax(0, 1fr)); } /* one full row per session, columns lined up */
 }
 .book-form { --text: var(--ink); --muted: var(--slate); --focus: var(--red); padding: clamp(20px, 2.2vw, 26px); border-radius: calc(var(--r-xl) + 4px); background: var(--paper); }
@@ -689,4 +688,24 @@ a.strip-value:hover { color: var(--red); }
 .book-call-alt.is-wa svg { width: 18px; height: 18px; color: #4ADE80; }
 
 /* Between phone and wide layouts the note takes a full row */
-@media (min-width: 640px) and (max-width: 1099px) { .book .field-note { grid-column: 1 / -1; } }
+
+
+/* ---------- Booking: each doctor with their own free times for the chosen day ---------- */
+.pick-hint { margin: 0; padding: 14px 16px; border-radius: 14px; border: 1px dashed #B9C4D8; color: var(--slate); font-size: var(--fs-small); max-width: none; }
+.pick-docs { display: grid; gap: 10px; }
+.pick-doc { display: grid; gap: 10px; padding: 14px; border-radius: 16px; background: var(--white); box-shadow: 0 0 0 1px #DCE2EE; }
+.pick-doc.is-preferred { order: -1; box-shadow: 0 0 0 2px var(--ink); }
+.pick-doc:has(input:checked) { box-shadow: 0 0 0 2px var(--ink); }
+.pick-name { margin: 0; display: flex; flex-direction: column; gap: 2px; line-height: 1.3; max-width: none; }
+.pick-name strong { font-size: var(--fs-small); color: var(--ink); }
+.pick-name span { font-size: var(--fs-micro); color: var(--slate); }
+.pick-none { margin: 0; font-size: var(--fs-small); color: var(--slate); max-width: none; }
+.pick-doc .slot-row[hidden], .pick-none[hidden] { display: none; }
+.pick-doc:has(.pick-none:not([hidden])) .slot-row { display: none; }
+.slot-row.is-entering { animation: faqIn .4s var(--ease-out) both; }
+@media (min-width: 900px) {
+  .pick-doc { grid-template-columns: 190px minmax(0, 1fr); align-items: center; padding: 10px 12px; }
+  .pick-doc .slot-row { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+  .pick-doc .slot span { min-height: 36px; font-size: .8rem; white-space: nowrap; }
+  .pick-docs { gap: 8px; }
+}

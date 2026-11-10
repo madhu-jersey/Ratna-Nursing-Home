@@ -398,28 +398,28 @@
     start();
   });
 
-  /* ---------- "Book with this doctor" prefills the form, department included ---------- */
+  /* ---------- "Book with this doctor": that doctor moves to the top of the booking form's list ---------- */
   $$('[data-book-doctor]').forEach(a => a.addEventListener('click', () => {
     const form = $('#appointment-form');
     if (!form) return;
-    const msg = form.elements.message, branch = form.elements.branch;
+    const branch = form.elements.branch;
     if (branch && a.dataset.branch) branch.value = a.dataset.branch;
-    if (form.elements.service && a.dataset.service) form.elements.service.value = a.dataset.service;
-    if (form.elements.doctor) form.elements.doctor.value = a.dataset.bookDoctor;
-    else if (msg && !msg.value) msg.value = `I would like to book with ${a.dataset.bookDoctor}.`;
+    $$('.pick-doc', form).forEach(card => card.classList.toggle('is-preferred', card.dataset.doctor === a.dataset.bookDoctor));
   }));
 
   /* ---------- Booking forms (the section and the popup): validate, save to the hospital's booking service, then hand off to WhatsApp ---------- */
+  // The doctor a form has chosen: the main form's checked time carries it, the popup's doctor list holds it
+  const pickedDoctor = form => $('[name="time"]:checked', form) || form.elements.doctor?.selectedOptions?.[0] || null;
   // The request as a WhatsApp message to reception, every detail already typed
   const waText = (form, id) => {
     const val = n => form.elements[n]?.value?.trim() || '';
-    const chosen = n => { const el = form.elements[n]; return el?.tagName === 'SELECT' && el.value ? el.selectedOptions[0].text : ''; };
-    const date = val('date');
+    const date = val('date'), doc = pickedDoctor(form);
     const day = date ? new Date(date + 'T00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
-    const time = $('[name="time"]:checked', form)?.nextElementSibling?.textContent || chosen('time');
+    const timeEl = form.elements.time;
+    const time = $('[name="time"]:checked', form)?.nextElementSibling?.textContent || (timeEl?.tagName === 'SELECT' && timeEl.value ? timeLabelOf(timeEl.value) : '');
     return 'Hello Ratna Nursing Home, I would like to book an appointment.\n\n' + [
       `Name: ${val('name')}`, `Phone: ${val('phone')}`,
-      chosen('doctor') && `Doctor: ${chosen('doctor')}`, chosen('service') && `Department: ${chosen('service')}`,
+      val('doctor') && `Doctor: ${val('doctor')}`, doc?.dataset.specialty && `Department: ${doc.dataset.specialty}`,
       day && `Day: ${day}`, time && `Time: ${time}`, val('message') && `Note: ${val('message')}`,
       id && `Request ID: ${id}`].filter(Boolean).join('\n');
   };
@@ -428,23 +428,48 @@
   const newId = () => { const d = new Date(), r = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join(''); return `RNH-${String(d.getFullYear()).slice(2)}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${r}`; };
   const newToken = () => crypto.randomUUID ? crypto.randomUUID() : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
   const store = (kind, key, val) => { try { return val === undefined ? window[kind].getItem(key) : window[kind].setItem(key, val); } catch { return null; } };
+  const pad = n => String(n).padStart(2, '0');
+  const isoOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const todayISO = () => isoOf(new Date());
+  // Bookings open for today and the next six days (the booking service checks this too)
+  const DAYS_AHEAD = 6;
+  const lastISO = () => { const d = new Date(); d.setDate(d.getDate() + DAYS_AHEAD); return isoOf(d); };
+  const nowHHMM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const dayProblem = v => !v ? 'Choose a day for your appointment.' : v < todayISO() ? 'Choose today or a later day.' : v > lastISO() ? `You can book up to ${DAYS_AHEAD} days ahead. Choose an earlier day.` : new Date(v + 'T00:00').getDay() === 0 ? 'OPD is closed on Sunday. Choose Monday to Saturday.' : '';
+  // Each doctor's booked times, by day, from the booking service: { '2026-11-12': { 'Dr. ...': ['10:00'] } }
+  let fullSlots = {};
+  const isBooked = (day, doctor, t) => ((fullSlots[day] || {})[doctor] || []).includes(t);
   const checks = {
     name: v => v.trim().length >= 2 || 'Enter your name.',
     phone: v => /^[+\d][\d\s-]{8,15}$/.test(v.trim()) || 'Enter a 10-digit mobile number.',
     branch: v => !!v || 'Choose a branch.',
-    // Day and time are required and must fall within OPD: Monday to Saturday, and not already past
-    date: v => !v ? 'Choose a day for your appointment.' : v < todayISO() ? 'Choose today or a later day.' : new Date(v + 'T00:00').getDay() === 0 ? 'OPD is closed on Sunday. Choose Monday to Saturday.' : true,
-    time: (v, form) => !v ? 'Choose a time for your appointment.' : form.elements.date?.value !== todayISO() || v > nowHHMM() || 'That time has already passed today. Choose a later time.'
+    // Day and time are required and must fall within OPD: Monday to Saturday, the next seven days, and not already past
+    date: v => dayProblem(v) || true,
+    doctor: v => !!v || 'Choose a doctor.',
+    time: (v, form) => {
+      const day = form.elements.date?.value, doctor = form.elements.doctor?.value;
+      if (!v) return form.elements.time instanceof RadioNodeList ? 'Choose a doctor and a time.' : 'Choose a time for your appointment.';
+      if (isBooked(day, doctor, v)) return 'That time is already booked with this doctor. Choose another.';
+      return day !== todayISO() || v > nowHHMM() || 'That time has already passed today. Choose a later time.';
+    }
   };
-  const pad = n => String(n).padStart(2, '0');
-  const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
-  const nowHHMM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const slotSyncers = [];
+  const loadFullSlots = async endpoint => {
+    try {
+      const data = await (await fetch(`${endpoint}?view=slots`)).json();
+      if (data.ok) { fullSlots = data.full || {}; slotSyncers.forEach(sync => sync()); }
+    } catch { /* without the list, the booking service still refuses a taken time when the request is sent */ }
+  };
+  // "17:30" -> "5:30 pm"
+  const timeLabelOf = t => { const [h, m] = t.split(':').map(Number); return `${(h + 11) % 12 + 1}:${pad(m)} ${h < 12 ? 'am' : 'pm'}`; };
+  const bookingEndpoint = $('form[data-booking][data-endpoint]')?.dataset.endpoint;
+  if (bookingEndpoint) loadFullSlots(bookingEndpoint);
   $$('form[data-booking]').forEach(form => {
     form.setAttribute('novalidate', '');
     const statusEl = $('.form-status', form), btn = $('button[type="submit"]', form), label = $('.submit-label', btn);
     const fields = Object.keys(checks).filter(n => form.elements[n] && form.elements[n].type !== 'hidden');
-    // A radio group (the time slots) arrives as a RadioNodeList: report on its fieldset, focus its first option
-    const first = n => { const el = form.elements[n]; return el instanceof RadioNodeList ? el[0] : el; };
+    // A radio group (the time slots) arrives as a RadioNodeList: report on its fieldset, focus its first open option
+    const first = n => { const el = form.elements[n]; return el instanceof RadioNodeList ? ([...el].find(r => !r.disabled && r.offsetParent) || el[0]) : el; };
     const validate = n => {
       const el = form.elements[n], res = checks[n](el.value, form), ok = res === true, box = first(n).closest('.field');
       box?.classList.toggle('has-error', !ok);
@@ -454,22 +479,47 @@
     };
     ['name', 'phone', 'branch'].filter(n => fields.includes(n)).forEach(n => form.elements[n].addEventListener('blur', () => { if (form.elements[n].value) validate(n); }));
 
-    // Slots already gone today are struck through and cannot be picked
-    const dateEl = form.elements.date;
-    if (dateEl) dateEl.min = todayISO();
+    // The chosen time names its doctor and department in the hidden fields that go to the booking service
+    const setDoctor = src => {
+      if (form.elements.doctor?.type === 'hidden') form.elements.doctor.value = src?.dataset.doctor || '';
+      if (form.elements.service) form.elements.service.value = src?.dataset.service || '';
+    };
+
+    // The doctors' times for the chosen day: gone today, or booked with that doctor, are struck through
+    const dateEl = form.elements.date, pick = $('.doc-pick', form);
+    if (dateEl) { dateEl.min = todayISO(); dateEl.max = lastISO(); }
     const syncSlots = () => {
-      const isToday = dateEl?.value === todayISO(), now = nowHHMM();
+      const day = dateEl?.value || '', isToday = day === todayISO(), now = nowHHMM();
+      if (pick) {
+        const open = !dayProblem(day);
+        $('.pick-body', pick).hidden = !open; $('.pick-hint', pick).hidden = open;
+      }
       $$('[name="time"], [name="time"] option', form).forEach(o => {
         if (!o.value || o.tagName === 'SELECT') return;
-        o.disabled = isToday && o.value <= now;
+        const doctor = o.dataset.doctor || form.elements.doctor?.value || '';
+        const booked = isBooked(day, doctor, o.value);
+        o.disabled = (isToday && o.value <= now) || booked;
+        const text = o.tagName === 'OPTION' ? o : o.nextElementSibling;
+        if (text) { text.dataset.text ??= text.textContent; text.textContent = booked && o.tagName === 'OPTION' ? `${text.dataset.text} (booked)` : text.dataset.text; text.classList?.toggle('is-booked', booked); }
         if (o.disabled && (o.checked || o.selected)) { o.checked = false; if (o.selected) o.closest('select').value = ''; }
       });
+      // A doctor with nothing left in the shown session says so
+      $$('.pick-doc', form).forEach(card => {
+        const row = $$('.slot-row', card).find(r => !r.hidden);
+        const none = $('.pick-none', card);
+        if (row && none) none.hidden = $$('input:not(:disabled)', row).length > 0;
+      });
+      if (!$('[name="time"]:checked', form) && form.elements.doctor?.type === 'hidden') setDoctor(null);
     };
+    slotSyncers.push(syncSlots);
     form.addEventListener('change', e => {
-      if (e.target.name === 'date') { syncSlots(); validate('date'); if (form.elements.time?.value) validate('time'); }
-      if (e.target.name === 'time') validate('time');
+      const n = e.target.name;
+      if (n === 'date') { syncSlots(); validate('date'); if (form.elements.time?.value) validate('time'); form.dispatchEvent(new Event('slots:sync')); }
+      if (n === 'doctor') { setDoctor(e.target.selectedOptions[0]); syncSlots(); validate('doctor'); if (form.elements.time.value) validate('time'); }
+      if (n === 'time') { if (e.target.type === 'radio') setDoctor(e.target); validate('time'); }
     });
-    form.addEventListener('reset', () => setTimeout(syncSlots));
+    form.addEventListener('reset', () => setTimeout(() => { setDoctor(null); syncSlots(); }));
+    syncSlots();
     const say = (text, kind, title, wa) => {
       statusEl.hidden = false; statusEl.textContent = '';
       if (title) { const t = document.createElement('strong'); t.className = 'status-title'; t.textContent = title; statusEl.append(t); }
@@ -483,45 +533,69 @@
       statusEl.classList.toggle('is-ok', kind === 'ok'); statusEl.classList.toggle('is-error', kind === 'error');
       statusEl.focus();
     };
-    form.addEventListener('submit', e => {
+    let sending = false;
+    form.addEventListener('submit', async e => {
       e.preventDefault();
+      if (sending) return;
       const bad = fields.filter(n => !validate(n));
       if (bad.length) { first(bad[0]).focus(); return; }
       const endpoint = form.dataset.endpoint, id = newId(), token = newToken();
       const wa = waHref(form, id);
-      // WhatsApp opens while the tap still counts, so the browser lets it through
-      const win = window.open(wa, '_blank');
-      if (win) win.opener = null;
-      // Saved at the same moment; keepalive lets it finish even as the page hands over to WhatsApp
-      if (endpoint) {
+      const firstName = form.elements.name.value.trim().split(/\s+/)[0];
+      const done = () => {
+        say('WhatsApp is opening with your request. Tap send there, and reception will confirm your time in the chat. If it did not open, use the button below.', 'ok', `Thank you, ${firstName}.`, wa);
+        form.reset();
+        store('sessionStorage', 'rnh-booked', '1');
+        form.dispatchEvent(new CustomEvent('booking:sent', { bubbles: true }));
+        location.href = wa;
+      };
+      if (!endpoint) { done(); return; }
+      // The booking service holds the doctor's time for this patient before WhatsApp opens, so no one else can take it
+      sending = true; btn.disabled = true; btn.classList.add('is-busy'); if (label) label.textContent = 'Checking the time';
+      try {
         const body = new URLSearchParams(new FormData(form));
         body.set('id', id); body.set('token', token);
-        fetch(endpoint, { method: 'POST', body, mode: 'no-cors', keepalive: true }).catch(() => {});
+        const data = await (await fetch(endpoint, { method: 'POST', body })).json();
+        if (data.ok) done();
+        else if ((data.errors || []).includes('taken')) {
+          // Someone booked this doctor's time a moment ago: mark it and ask for another
+          const day = form.elements.date.value, t = form.elements.time.value, doctor = form.elements.doctor.value;
+          ((fullSlots[day] ||= {})[doctor] ||= []).push(t);
+          syncSlots();
+          const box = first('time').closest('.field'), err = box && $('.error', box);
+          box?.classList.add('has-error');
+          if (err) err.textContent = `${timeLabelOf(t)} with ${doctor} was just booked by someone else. Choose another time.`;
+          loadFullSlots(endpoint);
+          box?.scrollIntoView({ block: 'center', behavior: motionOK() ? 'smooth' : 'auto' });
+        } else {
+          (data.errors || []).forEach(n => { if (checks[n]) validate(n); });
+          say('Please check the highlighted details and try again.', 'error');
+        }
+      } catch {
+        // No connection to the booking service: WhatsApp still carries the whole request to reception
+        say('We could not reserve the time online just now. Send your request on WhatsApp and reception will book you in.', 'error', 'Send your request on WhatsApp', wa);
+      } finally {
+        sending = false; btn.disabled = false; btn.classList.remove('is-busy'); if (label) label.textContent = 'Book on WhatsApp';
       }
-      const firstName = form.elements.name.value.trim().split(/\s+/)[0];
-      say('WhatsApp is opening with your request. Tap send there, and reception will confirm your time in the chat. If it did not open, use the button below.', 'ok', `Thank you, ${firstName}.`, wa);
-      form.reset();
-      store('sessionStorage', 'rnh-booked', '1');
-      form.dispatchEvent(new CustomEvent('booking:sent', { bubbles: true }));
     });
   });
 
-  /* ---------- Booking times: one session at a time; if every slot left today is in the other session, switch to it ---------- */
+  /* ---------- Doctors' times: one session at a time; if nothing is left in this session on the chosen day, switch ---------- */
   $$('.session-switch').forEach(sw => {
     const form = sw.closest('form'), btns = $$('.session-btn', sw);
-    const groups = btns.map(b => document.getElementById(b.getAttribute('aria-controls')));
+    const rows = i => $$(`.slot-row[data-sess="${i}"]`, form);
     const show = i => {
       btns.forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
-      groups.forEach((g, j) => { g.hidden = j !== i; if (j === i) { g.classList.remove('is-entering'); void g.offsetWidth; g.classList.add('is-entering'); } });
+      btns.forEach((b, j) => rows(j).forEach(r => { r.hidden = j !== i; if (j === i) { r.classList.remove('is-entering'); void r.offsetWidth; r.classList.add('is-entering'); } }));
+      $$('.pick-doc', form).forEach(card => { const none = $('.pick-none', card), row = rows(i).find(r => card.contains(r)); if (none && row) none.hidden = $$('input:not(:disabled)', row).length > 0; });
     };
-    sw.hidden = false;
-    form.classList.add('has-sessions');
     btns.forEach((b, i) => b.addEventListener('click', () => show(i)));
-    // The booking script disables past slots on its own change handler, which runs first
-    form.elements.date?.addEventListener('change', () => {
-      const open = groups.map(g => $$('input:not(:disabled)', g).length);
+    // The booking script greys out times on its own change handler, which runs first
+    form.addEventListener('slots:sync', () => {
+      const open = btns.map((b, i) => rows(i).reduce((n, r) => n + $$('input:not(:disabled)', r).length, 0));
       const cur = btns.findIndex(b => b.getAttribute('aria-pressed') === 'true');
-      if (!open[cur]) { const next = open.findIndex(n => n > 0); if (next >= 0) show(next); }
+      if (!open[cur]) { const next = open.findIndex(n => n > 0); if (next >= 0) { show(next); return; } }
+      show(cur);
     });
     // After a request is sent and the form clears, mornings show again
     form.addEventListener('reset', () => setTimeout(() => show(0)));
