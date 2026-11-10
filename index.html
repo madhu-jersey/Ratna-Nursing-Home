@@ -29,10 +29,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap">
-<link rel="stylesheet" href="assets/css/site.css?v=8c5611942c">
-<link rel="stylesheet" href="assets/css/home.css?v=8c5611942c">
+<link rel="stylesheet" href="assets/css/site.css?v=f7fb102003">
+<link rel="stylesheet" href="assets/css/home.css?v=f7fb102003">
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-<script src="assets/js/site.js?v=8c5611942c" defer></script>
+<script src="assets/js/site.js?v=f7fb102003" defer></script>
 </head>
 <body class="home">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -617,7 +617,6 @@
         <div class="form-grid">
           <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
           <div class="field"><label for="f-phone">Phone number</label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
-          <div class="field"><label for="f-email">Email <span class="req">(optional)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
           <div class="field date-field"><label for="f-date">Preferred day <span class="req">(Mon to Sat)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
           <div class="field"><label for="f-service">Department <span class="req">(optional)</span></label><select id="f-service" name="service"><option value="">Not sure yet</option><option value="general-medicine">General Medicine</option><option value="obstetrics-gynaecology">Obstetrics &amp; Gynaecology</option><option value="ultrasound">Ultrasound Scanning</option><option value="infertility">Infertility Treatment</option><option value="laparoscopic-surgery">Laparoscopic Surgery</option></select></div>
           <div class="field"><label for="f-doctor">Doctor <span class="req">(optional)</span></label><select id="f-doctor" name="doctor"><option value="">No preference</option><option value="Dr. Valluri Soma Sekhar">Dr. Valluri Soma Sekhar</option><option value="Dr. Valluri Subba Lakshmi">Dr. Valluri Subba Lakshmi</option><option value="Dr. Valluri Amrutha Ratna">Dr. Valluri Amrutha Ratna</option><option value="Dr. Bikkina Ghana Syam">Dr. Bikkina Ghana Syam</option></select></div>
@@ -638,8 +637,8 @@
         </div>
         <input type="hidden" name="source" value="page"><div class="trap" aria-hidden="true"><label>Company<input name="company" tabindex="-1" autocomplete="off"></label></div>
         <div class="book-foot">
-          <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
-          <p class="small book-note" id="form-note">This is a request. Reception confirms your time on WhatsApp.</p>
+          <button class="btn wa-btn book-submit" type="submit"><svg class="" aria-hidden="true" focusable="false"><use href="#i-whatsapp"/></svg><span class="submit-label">Book on WhatsApp</span></button>
+          <p class="small book-note" id="form-note">WhatsApp opens with your details. Tap send, and reception confirms your time in the chat.</p>
         </div>
         <p class="book-alt">Prefer to call? <a href="tel:+918819222250">08819 222250</a>. In an emergency, call <a href="tel:108">108</a> or come straight in, any time.</p>
         <div id="form-status" class="form-status" role="status" tabindex="-1" hidden></div>
@@ -741,7 +740,6 @@
     <form class="pop-form" action="#" method="post" data-booking data-whatsapp="918179898615" data-endpoint="https://script.google.com/macros/s/AKfycby5nvfryN77hhQnPOOInQ4dlVIn1rTB7vC11l4UZhE-xcr3PhbhdliDxU-tStmvDYMu/exec">
       <div class="field"><label for="p-name">Your name</label><input id="p-name" name="name" autocomplete="name" required aria-describedby="pe-name"><span class="error" id="pe-name" aria-live="polite"></span></div>
       <div class="field"><label for="p-phone">Phone number</label><input id="p-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="pe-phone"><span class="error" id="pe-phone" aria-live="polite"></span></div>
-      <div class="field"><label for="p-email">Email <span class="req">(optional)</span></label><input id="p-email" name="email" type="email" inputmode="email" autocomplete="email" aria-describedby="pe-email"><span class="error" id="pe-email" aria-live="polite"></span></div>
       <div class="pop-pair">
         <div class="field date-field"><label for="p-date">Day</label><input id="p-date" name="date" type="date" required aria-describedby="pe-date"><span class="error" id="pe-date" aria-live="polite"></span></div>
         <div class="field"><label for="p-time">Time</label>
@@ -751,7 +749,7 @@
       <div class="field"><label for="p-service">Department <span class="req">(optional)</span></label>
         <select id="p-service" name="service"><option value="">Choose a department</option><option value="general-medicine">General Medicine</option><option value="obstetrics-gynaecology">Obstetrics &amp; Gynaecology</option><option value="ultrasound">Ultrasound Scanning</option><option value="infertility">Infertility Treatment</option><option value="laparoscopic-surgery">Laparoscopic Surgery</option></select></div>
       <input type="hidden" name="source" value="popup"><div class="trap" aria-hidden="true"><label>Company<input name="company" tabindex="-1" autocomplete="off"></label></div>
-      <button class="btn btn-primary pop-submit" type="submit"><span class="submit-label">Request appointment</span></button>
+      <button class="btn wa-btn pop-submit" type="submit"><svg class="" aria-hidden="true" focusable="false"><use href="#i-whatsapp"/></svg><span class="submit-label">Book on WhatsApp</span></button>
       <div class="form-status" role="status" tabindex="-1" hidden></div>
     </form>
     <p class="pop-call">Prefer to call? <a href="tel:+918819222250">08819 222250</a></p>

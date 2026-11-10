@@ -334,7 +334,7 @@ a.strip-value:hover { color: var(--red); }
 }
 @media (min-width: 1100px) {
   .book .form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } /* two rows of fields: details, then choices and the note */
-  .book .field-note { grid-column: span 2; }
+  .book .field-note { grid-column: span 3; }
   .book .slot-row { grid-template-columns: repeat(8, minmax(0, 1fr)); } /* one full row per session, columns lined up */
 }
 .book-form { --text: var(--ink); --muted: var(--slate); --focus: var(--red); padding: clamp(20px, 2.2vw, 26px); border-radius: calc(var(--r-xl) + 4px); background: var(--paper); }

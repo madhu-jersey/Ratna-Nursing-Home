@@ -336,7 +336,6 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <div class="form-grid">
           <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
           <div class="field"><label for="f-phone">Phone number</label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
-          <div class="field"><label for="f-email">Email <span class="req">(optional)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
           <div class="field date-field"><label for="f-date">Preferred day <span class="req">(Mon to Sat)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
           <div class="field"><label for="f-service">Department <span class="req">(optional)</span></label><select id="f-service" name="service"><option value="">Not sure yet</option>${SERVICES.map(s => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
           <div class="field"><label for="f-doctor">Doctor <span class="req">(optional)</span></label><select id="f-doctor" name="doctor"><option value="">No preference</option>${DOCTORS.filter(d => d.name).map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join('')}</select></div>
@@ -356,8 +355,8 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         </div>
         ${trapFields('page')}
         <div class="book-foot">
-          <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
-          <p class="small book-note" id="form-note">This is a request. Reception confirms your time on WhatsApp.</p>
+          <button class="btn wa-btn book-submit" type="submit">${icon('i-whatsapp')}<span class="submit-label">Book on WhatsApp</span></button>
+          <p class="small book-note" id="form-note">WhatsApp opens with your details. Tap send, and reception confirms your time in the chat.</p>
         </div>
         <p class="book-alt">Prefer to call? <a href="tel:${PRIMARY.tel}">${PRIMARY.phone}</a>${EMERGENCY.available24h ? `. In an emergency, call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a> or come straight in, any time.` : '.'}</p>
         <div id="form-status" class="form-status" role="status" tabindex="-1" hidden></div>
@@ -400,7 +399,6 @@ const bookingPopup = () => `<div id="book-pop" class="book-pop" role="dialog" ar
     <form class="pop-form" action="#" method="post" ${bookingAttrs()}>
       <div class="field"><label for="p-name">Your name</label><input id="p-name" name="name" autocomplete="name" required aria-describedby="pe-name"><span class="error" id="pe-name" aria-live="polite"></span></div>
       <div class="field"><label for="p-phone">Phone number</label><input id="p-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="pe-phone"><span class="error" id="pe-phone" aria-live="polite"></span></div>
-      <div class="field"><label for="p-email">Email <span class="req">(optional)</span></label><input id="p-email" name="email" type="email" inputmode="email" autocomplete="email" aria-describedby="pe-email"><span class="error" id="pe-email" aria-live="polite"></span></div>
       <div class="pop-pair">
         <div class="field date-field"><label for="p-date">Day</label><input id="p-date" name="date" type="date" required aria-describedby="pe-date"><span class="error" id="pe-date" aria-live="polite"></span></div>
         <div class="field"><label for="p-time">Time</label>
@@ -410,7 +408,7 @@ const bookingPopup = () => `<div id="book-pop" class="book-pop" role="dialog" ar
       <div class="field"><label for="p-service">Department <span class="req">(optional)</span></label>
         <select id="p-service" name="service"><option value="">Choose a department</option>${SERVICES.map(s => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
       ${trapFields('popup')}
-      <button class="btn btn-primary pop-submit" type="submit"><span class="submit-label">Request appointment</span></button>
+      <button class="btn wa-btn pop-submit" type="submit">${icon('i-whatsapp')}<span class="submit-label">Book on WhatsApp</span></button>
       <div class="form-status" role="status" tabindex="-1" hidden></div>
     </form>
     <p class="pop-call">Prefer to call? <a href="tel:${PRIMARY.tel}">${PRIMARY.phone}</a></p>
