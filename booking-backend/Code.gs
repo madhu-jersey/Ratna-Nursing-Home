@@ -19,7 +19,7 @@
  */
 
 // Shown when the web app URL is opened in a browser, so you can see which code is live
-const VERSION = 'Version 11: reception app';
+const VERSION = 'Version 12: approved times always show';
 
 const CONFIG = {
   HOSPITAL_NAME: 'Ratna Nursing Home',
@@ -255,7 +255,7 @@ function approve_(row, r, iso, time, doctor) {
   }
   sh.getRange(row, COL['Status'], 1, 1).setValue('Approved');
   sh.getRange(row, COL['Confirmed date']).setValue("'" + date);
-  sh.getRange(row, COL['Confirmed time']).setValue(safe_(time));
+  sh.getRange(row, COL['Confirmed time']).setValue("'" + time); // as text: Sheets would turn "2:00 pm" into 14:00:00
   sh.getRange(row, COL['Decided at']).setValue(decidedNow_());
   sh.getRange(row, COL['Doctor']).setValue(doctor || 'Not assigned');
   forgetSchedule_(iso); // the schedule shows it straight away
@@ -325,13 +325,35 @@ function feed_() {
     hospital: { name: CONFIG.HOSPITAL_NAME, phone: CONFIG.HOSPITAL_PHONE, address: CONFIG.HOSPITAL_ADDRESS },
     sessions: CONFIG.SESSIONS, slotMinutes: CONFIG.SLOT_MINUTES, perSlot: CONFIG.PATIENTS_PER_SLOT,
     doctors: CONFIG.DOCTORS.map(d => ({ name: d, color: colorOf_(d)[1] })),
-    pending, taken: takenSlots_('', values), schedule: week_(today)
+    pending, taken: takenSlots_('', values), schedule: week_(today, values)
   };
 }
 
-// Every doctor's appointments from yesterday to the last bookable day, read from their calendars:
-// { '2026-11-12': { 'Dr. ...': [{ t: '10:00', name, dept, phone }] } }. Kept for two minutes; an approval clears it.
-function week_(today) {
+// Every doctor's appointments from yesterday to the last bookable day:
+// { '2026-11-12': { 'Dr. ...': [{ t: '10:00', name, dept, phone }] } }.
+// Approved bookings come straight from the sheet, so an approval always shows at once. The doctors' calendars add
+// anything made or moved there by hand; if a calendar cannot be read, the sheet's appointments still show.
+function week_(today, values) {
+  const first = dayAfter_(today, -1), last = dayAfter_(today, CONFIG.DAYS_AHEAD), out = {};
+  const add = (iso, doctor, e) => {
+    if (!iso || iso < first || iso > last || CONFIG.DOCTORS.indexOf(doctor) < 0 || !e.t) return;
+    const day = out[iso] = out[iso] || {}, list = day[doctor] = day[doctor] || [];
+    const same = list.filter(x => x.t === e.t && x.name.trim().toLowerCase() === e.name.trim().toLowerCase())[0];
+    if (same) { same.dept = same.dept || e.dept; same.phone = same.phone || e.phone; } else list.push(e);
+  };
+  (values || []).forEach(v => {
+    if (v[COL['Status'] - 1] !== 'Approved') return;
+    add(isoDate_(v[COL['Confirmed date'] - 1]), v[COL['Doctor'] - 1],
+      { t: hhmm_(v[COL['Confirmed time'] - 1]), name: v[COL['Name'] - 1], dept: v[COL['Department'] - 1], phone: v[COL['Phone'] - 1] });
+  });
+  let cal = {};
+  try { cal = calendarWeek_(today); } catch (err) { /* a calendar problem never hides the sheet's appointments */ }
+  Object.keys(cal).forEach(iso => Object.keys(cal[iso]).forEach(doctor => cal[iso][doctor].forEach(e => add(iso, doctor, e))));
+  Object.keys(out).forEach(d => Object.keys(out[d]).forEach(doc => out[d][doc].sort((a, b) => a.t < b.t ? -1 : 1)));
+  return out;
+}
+// The same week, read from the doctors' calendars. Kept for two minutes; an approval clears it.
+function calendarWeek_(today) {
   const tz = CONFIG.TIMEZONE, cache = CacheService.getScriptCache(), key = 'week ' + today;
   const kept = cache.get(key);
   if (kept) return JSON.parse(kept);
@@ -339,7 +361,8 @@ function week_(today) {
   const end = Utilities.parseDate(dayAfter_(today, CONFIG.DAYS_AHEAD + 1) + ' 00:00', tz, 'yyyy-MM-dd HH:mm');
   const out = {};
   CONFIG.DOCTORS.forEach(doctor => {
-    const cal = existingCalendar_(doctor);
+    let cal = null;
+    try { cal = existingCalendar_(doctor); } catch (err) { /* no access to this calendar */ }
     if (!cal) return;
     cal.getEvents(start, end).filter(e => !e.isAllDayEvent()).forEach(e => {
       const iso = Utilities.formatDate(e.getStartTime(), tz, 'yyyy-MM-dd');
@@ -348,7 +371,6 @@ function week_(today) {
       list.push({ t: Utilities.formatDate(e.getStartTime(), tz, 'HH:mm'), name: m[1], dept: m[2] || '', phone: ((e.getDescription() || '').match(/Phone: (.+)/) || [])[1] || '' });
     });
   });
-  Object.keys(out).forEach(d => Object.keys(out[d]).forEach(doc => out[d][doc].sort((a, b) => a.t < b.t ? -1 : 1)));
   try { cache.put(key, JSON.stringify(out), 120); } catch (e) { /* too big to keep: read fresh next time */ }
   return out;
 }
@@ -499,10 +521,13 @@ function slotsJson_() {
   return json_({ ok: true, today, last, full });
 }
 
-// "5:30 pm" -> "17:30"
+// "5:30 pm", "5:30:00 PM", "17:30" or "17:30:00" -> "17:30" (approvals before version 12 were turned into time values by Sheets)
 function hhmm_(label) {
-  const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(label || '');
-  return m ? String((Number(m[1]) % 12) + (m[3].toLowerCase() === 'pm' ? 12 : 0)).padStart(2, '0') + ':' + m[2] : '';
+  const m = /(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap])?\.?\s*m?\b/i.exec(String(label || ''));
+  if (!m) return '';
+  let h = Number(m[1]);
+  if (m[3]) h = h % 12 + (m[3].toLowerCase() === 'p' ? 12 : 0);
+  return h < 24 ? String(h).padStart(2, '0') + ':' + m[2] : '';
 }
 // "2026-11-12", 6 -> "2026-11-18"
 function dayAfter_(iso, n) {

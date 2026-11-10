@@ -36,7 +36,7 @@ The PIN lives only here, never in the code, because the website's code is public
 2. For a new deployment: click the gear next to *Select type*, choose **Web app**, set **Execute as: Me** and **Who has access: Anyone**. ("Anyone" lets the website save requests and lets reception open the approval link. It does not give anyone access to the sheet.)
 3. Click **Deploy**, then **Authorize access**. Google warns that the app is unverified because you wrote it yourself: choose **Advanced > Go to (project name)**, then **Allow**. It asks to edit this spreadsheet and to manage your calendars (for the doctors' appointment calendars).
 4. Copy the **Web app URL**. It ends in `/exec`.
-5. Open that URL in a browser. It should say **Version 11: reception app**.
+5. Open that URL in a browser. It should say **Version 12: approved times always show**.
 
 ## 4. Connect the website
 
@@ -56,7 +56,7 @@ The reception app lives on the website at **https://ratna-nursing-home.vercel.ap
 
 **Waiting tab:** bookings waiting for a decision, newest first. Tap one to see the details, call or WhatsApp the patient, and confirm the doctor, day and time with a tap each. Times the chosen doctor already has are crossed out. **Approve** shows the result straight away; the **Send confirmation on WhatsApp** button turns on a second later, once the booking is saved in the sheet and the doctor's calendar. If saving fails (no internet, or another phone already handled it), the app says so and the booking goes back to Waiting.
 
-**Schedule tab:** every doctor's appointments for a day, a card per doctor in their own colour, with the days from yesterday to six days ahead in a row at the top. Bookings still waiting show in red under their doctor. Tap an appointment to call the patient. It reads the doctors' Google Calendars, so changes made there show within two minutes.
+**Schedule tab:** every doctor's appointments for a day, straight from the sheet (an approval shows at once) plus anything added in their Google Calendars, a card per doctor in their own colour, with the days from yesterday to six days ahead in a row at the top. Bookings still waiting show in red under their doctor. Tap an appointment to call the patient. It reads the doctors' Google Calendars, so changes made there show within two minutes.
 
 **Lock** (the padlock) forgets the PIN on that phone. Ten wrong PINs in a row lock the app everywhere for 15 minutes.
 
