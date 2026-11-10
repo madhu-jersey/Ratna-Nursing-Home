@@ -9,13 +9,15 @@
  *     request, check the doctor, date and time, and approve (or decline). Patients never see this page or link.
  *  3. Approving puts the appointment on that doctor's Google Calendar and offers a ready-written WhatsApp
  *     confirmation to the patient. No email is sent at any point.
+ *  4. The Schedule tab (?view=schedule) shows every doctor's appointments for a day in one place, read straight
+ *     from their calendars, so changes made in Google Calendar show here too.
  *
  * The reception PIN is kept in Project Settings > Script properties as RECEPTION_PIN, never in this file.
  * Setup steps are in booking-backend/SETUP.md.
  */
 
 // Shown when the web app URL is opened in a browser, so you can see which code is live
-const VERSION = 'Version 7: reception app screens';
+const VERSION = 'Version 8: all doctors\' schedule, faster';
 
 const CONFIG = {
   HOSPITAL_NAME: 'Ratna Nursing Home',
@@ -37,6 +39,10 @@ const CONFIG = {
   // share each one with its doctor (see SETUP.md).
   DOCTOR_CALENDARS: {}
 };
+
+// One colour per doctor, in the order of CONFIG.DOCTORS: [Google Calendar colour, the same colour on the Schedule screen]
+const DOCTOR_COLORS = [['BLUE', '#2952A3'], ['PLUM', '#7A367A'], ['TEAL', '#0D7377'], ['ORANGE', '#B1440E'], ['GREEN', '#28754E'], ['RED', '#A32929']];
+const colorOf_ = doctor => DOCTOR_COLORS[Math.max(0, CONFIG.DOCTORS.indexOf(doctor)) % DOCTOR_COLORS.length];
 
 const DEPARTMENTS = {
   'general-medicine': 'General Medicine',
@@ -97,6 +103,7 @@ function doPost(e) {
 function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.view === 'reception') return pinGate_(p) || pendingPage_(p.pin);
+  if (p.view === 'schedule') return pinGate_(p) || schedulePage_(p.pin, p.day);
   if (!p.id) return page_({ title: 'Booking service', body: `<section class="card"><p>The ${CONFIG.HOSPITAL_NAME} booking service is running.</p><p class="muted">${VERSION}</p></section>` });
 
   // Every booking screen is reception's: the PIN comes first
@@ -124,6 +131,7 @@ function doGet(e) {
       if (doctor) {
         try {
           const ev = addToCalendar_(r, doctor, iso, time);
+          CacheService.getScriptCache().remove('schedule ' + iso); // the Schedule tab shows it straight away
           sh.getRange(row, COL['Calendar event']).setValue(ev ? 'Added to ' + doctor + "'s calendar" : 'Not added: date or time missing');
           eventNote = ev ? `Added to ${esc_(doctor)}'s calendar.` : 'Not added to the calendar: the date or time was missing.';
         } catch (err) {
@@ -208,7 +216,7 @@ function pinGate_(p) {
       <h2>Reception only</h2>
       <p class="muted">Enter the reception PIN to see bookings.</p>
       ${p.pin ? '<p class="err">That PIN is not right. Try again.</p>' : ''}
-      ${['view', 'id', 't'].filter(k => p[k]).map(k => `<input type="hidden" name="${k}" value="${esc_(p[k])}">`).join('')}
+      ${['view', 'day', 'id', 't'].filter(k => p[k]).map(k => `<input type="hidden" name="${k}" value="${esc_(p[k])}">`).join('')}
       <input type="password" name="pin" inputmode="numeric" autocomplete="off" aria-label="PIN" required autofocus>
       <button class="btn primary">Continue</button>
     </form>
@@ -242,11 +250,61 @@ function pendingPage_(pin) {
       ${ICON.next}
     </a>`;
   }).join('');
-  return page_({ title: 'Bookings', count: pending.length, body:
+  return page_({ title: 'Bookings', count: pending.length, tabs: { at: 'waiting', pin, waiting: pending.length }, body:
     (pending.length
       ? `<p class="lead">${pending.length === 1 ? '1 booking is' : pending.length + ' bookings are'} waiting. Tap one to approve.</p>${items}`
       : `<section class="card empty"><span class="ring calm">${ICON.tick}</span><h2>All caught up</h2><p class="muted">New WhatsApp bookings appear here. Tap Refresh after one comes in.</p></section>`) +
     `<div class="dock"><a class="btn primary" href="${url}?view=reception&pin=${encodeURIComponent(pin)}" target="_top">${ICON.refresh}Refresh</a></div>` });
+}
+
+/* ---------------- Reception's schedule: every doctor's appointments for one day ---------------- */
+
+function schedulePage_(pin, dayIso) {
+  const tz = CONFIG.TIMEZONE, url = ScriptApp.getService().getUrl();
+  const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(dayIso || '') ? dayIso : today;
+  const start = Utilities.parseDate(iso + ' 00:00', tz, 'yyyy-MM-dd HH:mm');
+  const end = new Date(start.getTime() + 864e5);
+  const step = n => Utilities.formatDate(new Date(start.getTime() + n * 864e5 + 12 * 36e5), tz, 'yyyy-MM-dd');
+  const go = day => `${url}?view=schedule&day=${day}&pin=${encodeURIComponent(pin)}`;
+
+  // Straight from each doctor's calendar, so moves, cancellations and hand-made entries all show.
+  // Reading four calendars is the slow part, so a day is kept for two minutes (an approval clears it at once).
+  const cache = CacheService.getScriptCache(), key = 'schedule ' + iso;
+  const kept = cache.get(key);
+  const doctors = kept ? JSON.parse(kept) : CONFIG.DOCTORS.map(doctor => {
+    const cal = existingCalendar_(doctor);
+    const events = cal ? cal.getEvents(start, end).filter(e => !e.isAllDayEvent()).sort((a, b) => a.getStartTime() - b.getStartTime()) : [];
+    return { doctor, color: colorOf_(doctor)[1], events: events.map(e => {
+      const m = /^(.*?)(?: \((.+)\))?$/.exec(e.getTitle());
+      return { time: Utilities.formatDate(e.getStartTime(), tz, 'h:mm a').toLowerCase(), name: m[1], dept: m[2] || '', phone: ((e.getDescription() || '').match(/Phone: (.+)/) || [])[1] || '' };
+    }) };
+  });
+  if (!kept) cache.put(key, JSON.stringify(doctors), 120);
+  const total = doctors.reduce((n, d) => n + d.events.length, 0);
+  const label = dayLabel_(prettyDate_(iso));
+
+  const cards = doctors.map(d => `<section class="card doc">
+      <h2 class="doc-head"><span class="dot" style="background:${d.color}"></span><span>${esc_(d.doctor)}</span><span class="doc-n">${d.events.length || ''}</span></h2>
+      ${d.events.length ? `<ul class="slots">${d.events.map(ev => `<li>${ev.phone ? `<a href="tel:${esc_(ev.phone)}">` : '<div>'}
+        <span class="slot-t" style="color:${d.color}">${esc_(ev.time)}</span>
+        <span class="slot-p"><strong>${esc_(ev.name)}</strong>${ev.dept ? `<span>${esc_(ev.dept)}</span>` : ''}</span>
+        ${ev.phone ? ICON.phone + '</a>' : '</div>'}</li>`).join('')}</ul>`
+        : '<p class="muted">No appointments</p>'}
+    </section>`).join('');
+
+  return page_({ title: 'Schedule', tabs: { at: 'schedule', pin, waiting: countPending_() }, body: `
+    <nav class="days" aria-label="Choose a day">
+      <a class="day-btn" href="${go(step(-1))}" target="_top" aria-label="Previous day">${ICON.back}</a>
+      <div class="day-now"><strong>${esc_(label)}</strong><span>${esc_(prettyDate_(iso))}</span></div>
+      <a class="day-btn" href="${go(step(1))}" target="_top" aria-label="Next day">${ICON.next}</a>
+    </nav>
+    <p class="lead">${total ? `${total} appointment${total === 1 ? '' : 's'} across all doctors.` : 'No appointments on this day.'}</p>
+    ${cards}
+    <div class="dock"><a class="btn primary" href="${go(today)}" target="_top">${iso === today ? ICON.refresh + 'Refresh' : ICON.list + 'Back to today'}</a></div>` });
+}
+function countPending_() {
+  return sheet_().getDataRange().getDisplayValues().slice(1).filter(v => v[COL['Status'] - 1] === 'Pending').length;
 }
 
 // "Thursday, 12 November 2026" -> "Today", "Tomorrow" or "Thu 12 Nov"
@@ -256,6 +314,7 @@ function dayLabel_(pretty) {
   const day = n => Utilities.formatDate(new Date(Date.now() + n * 864e5), CONFIG.TIMEZONE, 'yyyy-MM-dd');
   if (iso === day(0)) return 'Today';
   if (iso === day(1)) return 'Tomorrow';
+  if (iso === day(-1)) return 'Yesterday';
   const [y, m, d] = iso.split('-').map(Number);
   return Utilities.formatDate(new Date(y, m - 1, d), CONFIG.TIMEZONE, 'EEE d MMM');
 }
@@ -284,15 +343,22 @@ const ICON = (() => {
 
 /* ---------------- Doctors' calendars ---------------- */
 
-// The doctor's calendar: one named in DOCTOR_CALENDARS, or one this script made earlier, or a new one
+// The doctor's calendar if there is one yet: named in DOCTOR_CALENDARS, or made earlier by this script
+function existingCalendar_(doctor) {
+  const id = CONFIG.DOCTOR_CALENDARS[doctor] || PropertiesService.getScriptProperties().getProperty('CAL ' + doctor);
+  return (id && CalendarApp.getCalendarById(id)) || null;
+}
+// ...or a new one, in the doctor's own colour
 function doctorCalendar_(doctor) {
-  const props = PropertiesService.getScriptProperties();
-  const id = CONFIG.DOCTOR_CALENDARS[doctor] || props.getProperty('CAL ' + doctor);
-  const found = id && CalendarApp.getCalendarById(id);
+  const found = existingCalendar_(doctor);
   if (found) return found;
-  const cal = CalendarApp.createCalendar(doctor + ' - Ratna appointments', { timeZone: CONFIG.TIMEZONE, color: CalendarApp.Color.BLUE });
-  props.setProperty('CAL ' + doctor, cal.getId());
+  const cal = CalendarApp.createCalendar(doctor + ' - Ratna appointments', { timeZone: CONFIG.TIMEZONE, color: CalendarApp.Color[colorOf_(doctor)[0]] });
+  PropertiesService.getScriptProperties().setProperty('CAL ' + doctor, cal.getId());
   return cal;
+}
+// Run once from the Apps Script editor to give calendars made before version 8 their doctors' colours
+function colourDoctorCalendars() {
+  CONFIG.DOCTORS.forEach(doctor => { const cal = existingCalendar_(doctor); if (cal) cal.setColor(CalendarApp.Color[colorOf_(doctor)[0]]); });
 }
 
 // One 30-minute event at the confirmed time; returns its ID, or '' when the date or time is missing
@@ -321,9 +387,13 @@ function waUrl_(phone, text) {
 
 /* ---------------- Helpers ---------------- */
 
+let sheetMemo_ = null;
 function sheet_() {
+  if (sheetMemo_) return sheetMemo_;
   const ss = book_();
   let sh = ss.getSheetByName(CONFIG.SHEET_NAME);
+  const cache = CacheService.getScriptCache();
+  if (sh && cache.get('headings-ok')) return (sheetMemo_ = sh);
   if (!sh) {
     sh = ss.insertSheet(CONFIG.SHEET_NAME, 0);
     sh.appendRow(HEADERS);
@@ -337,7 +407,8 @@ function sheet_() {
   if (sh.getRange(1, COL['Doctor']).getValue() !== 'Doctor') {
     sh.getRange(1, COL['Doctor'], 1, 2).setValues([['Doctor', 'Calendar event']]).setFontWeight('bold').setBackground('#0B2A6F').setFontColor('#FFFFFF');
   }
-  return sh;
+  cache.put('headings-ok', '1', 21600);
+  return (sheetMemo_ = sh);
 }
 
 // The spreadsheet that holds the Appointments tab, wherever this script lives
@@ -404,7 +475,7 @@ function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 
 // Every reception screen. The viewport has to be set here: Google ignores one written inside the page,
 // which is what made the screens tiny on phones.
-function page_({ title, body, back, count }) {
+function page_({ title, body, back, count, tabs }) {
   const list = back ? `${ScriptApp.getService().getUrl()}?view=reception&pin=${encodeURIComponent(back)}` : '';
   return HtmlService.createHtmlOutput(`<style>
     :root{--ink:#0B2A6F;--red:#C8102E;--green:#13804A;--fog:#F2F5FA;--line:#DCE2EE;--slate:#4F5B74}
@@ -468,12 +539,40 @@ function page_({ title, body, back, count }) {
     .err{margin:0;color:var(--red);font-weight:700}
     .dock{position:fixed;left:0;right:0;bottom:0;padding:16px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(rgba(242,245,250,0),var(--fog) 35%)}
     .dock .btn{max-width:608px;margin:0 auto}
+    .tabs{margin:14px -16px -2px;padding:0 16px}
+    .tabs-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border-radius:16px;background:rgba(255,255,255,.12)}
+    .tabs a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:12px;color:#fff;font-weight:700;text-decoration:none}
+    .tabs a[aria-current]{background:#fff;color:var(--ink)}
+    .tabs a span{min-width:26px;height:26px;padding:0 7px;border-radius:999px;background:var(--red);color:#fff;display:grid;place-items:center;font-size:14px}
+    .days{display:grid;grid-template-columns:54px 1fr 54px;align-items:center;gap:10px}
+    .day-btn{display:grid;place-items:center;height:54px;border-radius:16px;background:#fff;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+    .day-now{text-align:center;display:grid}
+    .day-now strong{font:400 24px/1.2 Georgia,serif}
+    .day-now span{color:var(--slate);font-size:14px}
+    .doc{padding:18px 18px 8px}
+    .doc-head{display:flex;align-items:center;gap:10px;margin:0 0 6px;font-family:inherit;font-size:18px;font-weight:700;line-height:1.3}
+    .dot{width:14px;height:14px;flex:none;border-radius:50%}
+    .doc-n{margin-left:auto;min-width:30px;height:30px;padding:0 9px;border-radius:999px;background:var(--fog);display:grid;place-items:center;font-size:15px}
+    .doc-n:empty{display:none}
+    .doc .muted{padding:6px 0 12px}
+    .slots{list-style:none;margin:0;padding:0}
+    .slots li{border-top:1px solid var(--line)}
+    .slots a,.slots li>div{display:flex;align-items:center;gap:14px;min-height:64px;padding:10px 0;color:inherit;text-decoration:none}
+    .slots a>svg{margin-left:auto;color:#9AA7C2}
+    .slot-t{flex:none;width:76px;font-weight:700;font-size:17px}
+    .slot-p{display:grid;min-width:0}
+    .slot-p strong{font-size:17px}
+    .slot-p span{color:var(--slate);font-size:14px}
   </style>
   <header class="bar"><div class="bar-in">
     ${list ? `<a class="back" href="${list}" target="_top" aria-label="All bookings">${ICON.back}</a>` : ''}
     <div><span class="org">${CONFIG.HOSPITAL_NAME}</span><h1>${esc_(title)}</h1></div>
-    ${count ? `<span class="count" aria-label="${count} waiting">${count}</span>` : ''}
-  </div></header>
+    ${count && !tabs ? `<span class="count" aria-label="${count} waiting">${count}</span>` : ''}
+  </div>
+  ${tabs ? `<nav class="tabs"><div class="tabs-in">
+    <a href="${ScriptApp.getService().getUrl()}?view=reception&pin=${encodeURIComponent(tabs.pin)}" target="_top"${tabs.at === 'waiting' ? ' aria-current="page"' : ''}>Waiting${tabs.waiting ? `<span>${tabs.waiting}</span>` : ''}</a>
+    <a href="${ScriptApp.getService().getUrl()}?view=schedule&pin=${encodeURIComponent(tabs.pin)}" target="_top"${tabs.at === 'schedule' ? ' aria-current="page"' : ''}>Schedule</a>
+  </div></nav>` : ''}</header>
   <main>${body}</main>`)
     .setTitle(title + ' | ' + CONFIG.HOSPITAL_NAME)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');

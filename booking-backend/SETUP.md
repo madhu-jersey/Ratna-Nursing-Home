@@ -36,7 +36,7 @@ The PIN lives only here, never in the code, because the website's code is public
 2. For a new deployment: click the gear next to *Select type*, choose **Web app**, set **Execute as: Me** and **Who has access: Anyone**. ("Anyone" lets the website save requests and lets reception open the approval link. It does not give anyone access to the sheet.)
 3. Click **Deploy**, then **Authorize access**. Google warns that the app is unverified because you wrote it yourself: choose **Advanced > Go to (project name)**, then **Allow**. It asks to edit this spreadsheet and to manage your calendars (for the doctors' appointment calendars).
 4. Copy the **Web app URL**. It ends in `/exec`.
-5. Open that URL in a browser. It should say **Version 7: reception app screens**.
+5. Open that URL in a browser. It should say **Version 8: all doctors' schedule, faster**.
 
 ## 4. Connect the website
 
@@ -44,15 +44,23 @@ The website already uses `https://script.google.com/macros/s/AKfycby5nvfryN77hhQ
 
 The WhatsApp number on the website is `WHATSAPP` in `build/data.mjs`, and the doctor list is `DOCTORS`. Keep the doctor list in step with `DOCTORS` at the top of `Code.gs`.
 
-## 4b. Put the Pending bookings page on reception's phone
+## 4b. Put the reception app on reception's phone
 
 1. On the reception phone, open `https://script.google.com/macros/s/AKfycby5nvfryN77hhQnPOOInQ4dlVIn1rTB7vC11l4UZhE-xcr3PhbhdliDxU-tStmvDYMu/exec?view=reception` in Chrome (or Safari on an iPhone).
-2. Enter the PIN. The page lists every booking still waiting for a decision.
-3. Add it to the home screen: in Chrome, the three-dot menu, then **Add to Home screen**; in Safari, the Share button, then **Add to Home Screen**. Name it *Bookings*.
+2. Enter the PIN. The **Waiting** tab lists every booking still waiting for a decision.
+3. **Now**, on that page (after the PIN), add it to the home screen: in Chrome, the three-dot menu, then **Add to Home screen**; in Safari, the Share button, then **Add to Home Screen**. Name it *Bookings*.
 
-From then on, reception taps **Bookings** whenever a WhatsApp booking comes in. Tap **Refresh** on the page to see new ones.
+Adding it after the PIN matters for speed: the saved icon then opens straight to the bookings in one step. Saved before the PIN, every visit loads the PIN screen first and then the bookings. If the icon was added earlier, delete it and add it again this way.
+
+From then on, reception taps **Bookings** whenever a WhatsApp booking comes in, and **Refresh** to see new ones.
+
+**Schedule tab:** every doctor's appointments for one day, in one place: a card per doctor in their own colour, appointments in time order, and the arrows to move between days. Tap an appointment to call the patient. It reads the doctors' Google Calendars, so changes made there show too (within two minutes; an approval shows at once).
+
+Each screen takes a second or two to load: that is Google's web-app service, the same for every Apps Script page.
 
 ## 5. Share each doctor's calendar
+
+Each doctor has a colour (blue, plum, teal, orange, in the order of `DOCTORS` in `Code.gs`), used on the Schedule tab and for their calendar in Google Calendar. Calendars made before version 8 keep their old colour until you run **colourDoctorCalendars** once: in Apps Script, choose it in the function list at the top and click **Run**.
 
 The script makes a calendar for a doctor the first time an appointment is approved for them, named like *Dr. Valluri Amrutha Ratna - Ratna appointments*, in the Google account that runs the script.
 
