@@ -108,7 +108,7 @@ export const dial = (cls = '', n = 60) => `<svg class="dial ${cls}" viewBox="0 0
 </svg>`;
 export const BEAT = 'M0 20 H150 l8 -12 l9 26 l11 -30 l9 26 l7 -10 H400';
 
-const navItems = [['services', 'Services'], ['about', 'About'], ['doctors', 'Doctors'], ['branches', 'Find us'], ['gallery', 'Gallery'], ['reviews', 'Reviews'], ['contact', 'Contact'], ['faq', 'FAQ']];
+const navItems = [['services', 'Services'], ['doctors', 'Doctors'], ['branches', 'Find us'], ['gallery', 'Gallery'], ['reviews', 'Reviews'], ['contact', 'Contact'], ['faq', 'FAQ']];
 
 export const callLabel = () => BRANCHES.length > 1 ? `Call ${PRIMARY.name}` : 'Call reception';
 

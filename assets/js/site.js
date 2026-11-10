@@ -82,7 +82,7 @@
       [...group.children].forEach((child, i) => { child.classList.add('reveal'); child.style.setProperty('--i', i); });
     });
     // Section headings: wrap each word so it can rise out of its own mask
-    $$('.section-head h2, .cta-band h2, .about-copy h2, .contact-copy h2').forEach(h => {
+    $$('.section-head h2, .cta-band h2, .contact-copy h2').forEach(h => {
       if (h.children.length) return; // only plain-text headings
       const words = h.textContent.trim().split(/\s+/);
       h.textContent = '';
@@ -129,27 +129,6 @@
     paint();
   } else $$('.flow-step').forEach(st => st.classList.add('is-active'));
 
-  /* ---------- Parallax (transform only, only while visible) ---------- */
-  const parallaxEls = $$('[data-parallax]');
-  // Desktop only: on phones, moving pictures against a touch scroll feels jumpy and costs battery
-  if (parallaxEls.length && motionOK() && matchMedia('(min-width: 760px)').matches) {
-    const visible = new Set();
-    const pio = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)), { rootMargin: '20% 0px' });
-    parallaxEls.forEach(el => pio.observe(el));
-    let ticking = false;
-    const update = () => {
-      ticking = false;
-      const vh = innerHeight;
-      visible.forEach(el => {
-        const r = el.parentElement.getBoundingClientRect();
-        const progress = (r.top + r.height / 2 - vh / 2) / vh; // -1..1 around centre
-        el.style.setProperty('--py', `${(progress * parseFloat(el.dataset.parallax) * 100).toFixed(1)}px`);
-      });
-    };
-    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
-    update();
-  }
-
   /* ---------- Hero: the dial drifts a little toward the pointer ---------- */
   const hero = $('.hero'), seal = $('.hero-seal');
   if (hero && seal && finePointer.matches && motionOK()) {
@@ -176,26 +155,6 @@
       btn.addEventListener('pointerleave', () => { btn.style.setProperty('--bx', '0px'); btn.style.setProperty('--by', '0px'); });
     });
   }
-
-  /* ---------- Counters: animate only numbers the client has confirmed ---------- */
-  $$('[data-count]').forEach(el => {
-    if (el.dataset.confirmed !== 'true') return;
-    const target = parseFloat(el.dataset.count), suffix = el.dataset.suffix || '';
-    const fmt = n => Math.round(n).toLocaleString('en-IN') + suffix;
-    if (!motionOK()) { el.textContent = fmt(target); return; }
-    const io = new IntersectionObserver(([en]) => {
-      if (!en.isIntersecting) return;
-      io.disconnect();
-      const t0 = performance.now(), dur = 1400;
-      const step = t => {
-        const p = Math.min(1, (t - t0) / dur);
-        el.textContent = fmt(target * (1 - Math.pow(1 - p, 3)));
-        if (p < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-    }, { threshold: .6 });
-    io.observe(el);
-  });
 
   /* ---------- FAQ accordion: in a [data-single] list, opening one answer closes the others ---------- */
   const setAcc = (btn, open) => {

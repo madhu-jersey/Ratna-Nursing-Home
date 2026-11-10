@@ -147,7 +147,6 @@ Put the photos in `assets/img/gallery/` and write the file names next to each it
 - Pharmacy:
 - Waiting area:
 - Nursing / staff team:
-- Photo for the About section:
 
 ## 13. Social media
 - Facebook link:

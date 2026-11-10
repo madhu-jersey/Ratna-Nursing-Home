@@ -19,12 +19,7 @@ export const SITE = {
   registration: null,  // TODO(client): clinical establishment registration, shown in the footer
   googleListing: 'https://www.google.com/maps/place/Ratna+Nursing+Home/@16.7562839,81.6732954,1050m/data=!3m1!1e3!4m18!1m9!3m8!1s0x3a37b7ef5c469b97:0x5ef5c6882cadc0be!2sRatna+Nursing+Home!8m2!3d16.7562788!4d81.6758703!9m1!1b1!16s%2Fg%2F11dxlc85mm!3m7!1s0x3a37b7ef5c469b97:0x5ef5c6882cadc0be!8m2!3d16.7562788!4d81.6758703!9m1!1b1!16s%2Fg%2F11dxlc85mm',
   rating: 3.9,         // Google listing, as supplied by the client (October 2026)
-  reviewCount: 55,
-  stats: [             // TODO(client): confirm each, then set confirmed: true to animate the counter
-    { label: 'Years of service', value: null, suffix: '+', confirmed: false },
-    { label: 'Beds', value: null, suffix: '', confirmed: false },
-    { label: 'Patients treated', value: null, suffix: '+', confirmed: false }
-  ]
+  reviewCount: 55
 };
 
 export const BRANCHES = [

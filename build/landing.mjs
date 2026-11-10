@@ -123,40 +123,6 @@ const approach = () => `<section class="section approach" aria-labelledby="appro
   </div>
 </section>`;
 
-/* ---------- 3. About: two frames at different depths ---------- */
-const about = () => `<section id="about" class="section about" aria-labelledby="about-title">
-  <div class="wrap about-grid">
-    <div class="about-collage">
-      <figure class="photo-ph about-photo reveal-mask" style="margin:0">
-        <div class="ph-inner" data-parallax=".1" aria-hidden="true"></div>
-        <figcaption class="ph-label">${icon('i-image', 'ph-glyph')}${SHOW_NOTES ? '<span>Hospital photo to be supplied</span><span class="small">Suggested: the front of the hospital in daylight</span>' : ''}</figcaption>
-      </figure>
-      <div class="about-float" data-parallax="-.35">
-        <figure class="photo-ph about-photo-sm reveal-mask" style="margin:0;--i:2">
-          <div class="ph-inner" aria-hidden="true"></div>
-          <figcaption class="ph-label">${SHOW_NOTES ? '<span class="small">Doctors at work, to be supplied</span>' : icon('i-image', 'ph-glyph')}</figcaption>
-        </figure>
-      </div>
-      <div class="about-chip reveal" style="--i:3">
-        <span class="about-chip-mark">${icon('m-cross')}</span>
-        <span><strong>${cap(count(SERVICES.length))} departments</strong><span>under one roof in ${esc(SITE.town)}</span></span>
-      </div>
-    </div>
-    <div class="about-copy">
-      <p class="eyebrow reveal">About the hospital</p>
-      <h2 id="about-title" class="reveal">A family hospital for ${esc(SITE.town)}</h2>
-      <p class="reveal">General physicians and gynaecologists work under one roof, so a mother-to-be, a parent with diabetes and a young couple hoping for a child can all be seen by the right doctor, close to home. Scans, reports and follow-ups stay together at one hospital, from the first consultation to discharge.</p>
-      ${SHOW_NOTES || SITE.stats.some(st => st.value != null) ? `<div class="stats" data-stagger>
-        ${SITE.stats.map(st => `<div class="stat">
-          <span class="stat-value"${st.value != null ? ` data-count="${st.value}" data-suffix="${st.suffix}" data-confirmed="${st.confirmed}"` : ''}>${st.value != null ? Number(st.value).toLocaleString('en-IN') + st.suffix : '&ndash;'}</span>
-          <span class="stat-label">${st.label}</span>
-          ${st.confirmed ? '' : note('To be confirmed')}
-        </div>`).join('')}
-      </div>` : ''}
-    </div>
-  </div>
-</section>`;
-
 /* ---------- 4. Doctors: one wide card each, the portrait alternating sides; a dial with initials until photos arrive ---------- */
 const initials = name => name.replace(/^Dr\.?\s*/, '').split(/\s+/).slice(-2).map(w => w[0]).join('');
 const doctorCard = d => {
@@ -522,7 +488,6 @@ ${heroSlot()}
 ${services()}
 ${why()}
 ${approach()}
-${about()}
 ${doctors()}
 ${branches()}
 ${gallery()}

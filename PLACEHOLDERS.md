@@ -30,11 +30,6 @@ Each item below shows on the site as a pale blue-grey "to be confirmed" chip, a 
 - [x] Emergency number: the reception line, 08819 222250, answered 24 hours.
 - [ ] Ambulance number, if the hospital has its own
 
-## About
-- [ ] Years of service (or the year established)
-- [ ] Number of beds
-- [ ] Patients treated
-  Once a number is confirmed, set `value` and `confirmed: true` in `SITE.stats` and its counter will animate.
 - [ ] Hospital photo (suggested: the front of the hospital in daylight)
 
 ## Doctors

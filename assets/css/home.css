@@ -111,8 +111,8 @@ a.strip-value:hover { color: var(--red); }
    and the heartbeat only where something is in progress. Navy is kept for one inset panel and the footer. */
 
 .home { --glow: radial-gradient(900px 600px at 85% 0%, #E9EEF8 0%, rgba(233, 238, 248, 0) 70%); --lift: 0 1px 0 rgba(11, 42, 111, .04), 0 30px 60px -38px rgba(11, 42, 111, .32); --r-xl: 28px; }
-.why, .about, .find-us, .reviews { --bg: var(--white); background: var(--white); }
-.services, .approach, .doctors, .gallery, .faq { --bg: var(--paper); background: var(--glow), var(--paper); }
+.why, .doctors, .gallery { --bg: var(--white); background: var(--white); }
+.services, .approach, .find-us, .reviews, .faq { --bg: var(--paper); background: var(--glow), var(--paper); }
 
 /* The small dial (shared by departments, doctors, reviews and contact) */
 .dial { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--ink); transition: rotate 1.6s var(--ease-out); }
@@ -148,40 +148,6 @@ a.strip-value:hover { color: var(--red); }
 .motion .flow-step { opacity: .28; }
 .motion .flow-step.is-active { opacity: 1; }
 .flow-step.is-active .flow-num { background: var(--red); color: var(--white); box-shadow: 0 0 0 6px rgba(200, 16, 46, .12); scale: 1.06; }
-
-/* ---------- About ---------- */
-.about-grid { display: grid; gap: clamp(40px, 5vw, 72px); align-items: center; }
-@media (min-width: 960px) { .about-grid { grid-template-columns: 5fr 6fr; } }
-.about-collage { position: relative; width: 100%; max-width: 440px; justify-self: center; padding: 0 12% 14% 0; }
-.about-photo { aspect-ratio: 4 / 5; border-radius: 999px 999px var(--r-xl) var(--r-xl); border: 0; box-shadow: var(--lift); }
-.about-float { position: absolute; right: 0; bottom: 0; width: 44%; transform: translate3d(0, var(--py, 0px), 0); will-change: transform; }
-.about-photo-sm { aspect-ratio: 1; border-radius: 50%; border: 6px solid var(--paper); box-shadow: var(--lift); }
-.about-photo-sm .ph-label { padding: 12px; }
-.about-chip {
-  position: absolute; left: -4%; bottom: 20%; display: flex; align-items: center; gap: 14px;
-  padding: 14px 20px 14px 14px; border-radius: 999px; background: var(--white); box-shadow: var(--lift);
-}
-.about-chip-mark { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--blush); color: var(--red); flex: none; }
-.about-chip-mark svg { width: 18px; height: 18px; }
-.about-chip strong { display: block; font-family: var(--serif); font-size: 1.15rem; font-weight: 600; line-height: 1.2; }
-.about-chip strong + span { display: block; font-size: var(--fs-micro); color: var(--slate); }
-@media (max-width: 520px) { .about-chip { left: 0; bottom: 6%; } }
-.about-copy h2 { margin-bottom: 18px; }
-.about-copy > p { color: var(--slate); font-size: var(--fs-lead); line-height: 1.65; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 32px; padding: 20px 0 0; border-top: 1px solid #D3DBEA; }
-.stat { padding-right: 16px; }
-.stat + .stat { padding-left: 20px; border-left: 1px solid #D3DBEA; }
-.stat-value { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(2.2rem, 1.8rem + 1.2vw, 3rem); line-height: 1; letter-spacing: -.02em; }
-.stat-label { display: block; color: var(--slate); font-size: var(--fs-small); margin: 10px 0; }
-@media (max-width: 520px) {
-  .stats { gap: 8px; padding-top: 0; border-top: 0; }
-  .stat, .stat + .stat { display: grid; justify-items: center; align-content: start; padding: 14px 6px 12px; border: 0; border-radius: 16px; background: var(--paper); text-align: center; }
-  .stat-value { font-size: 1.9rem; }
-  .stat-label { margin: 6px 0 8px; font-size: .78rem; line-height: 1.3; }
-  .stat .tbc { padding: 3px 7px; font-size: .66rem; }
-}
-
-/* The dial sits high to leave room for the photo note; the face is centred on it */
 
 /* ---------- Services: three white cards, each a ticked list ---------- */
 .svc-groups { display: grid; gap: 20px; }
@@ -298,7 +264,7 @@ a.strip-value:hover { color: var(--red); }
 /* ---------- Reviews: a rating card beside review cards of equal height ---------- */
 .reviews-grid { display: grid; gap: 28px; }
 @media (min-width: 1000px) { .reviews-grid { grid-template-columns: 300px minmax(0, 1fr); gap: 40px; align-items: start; } .rating { position: sticky; top: 110px; } }
-.rating { display: grid; gap: 22px; padding: 26px; border-radius: var(--r-xl); background: var(--paper); box-shadow: 0 0 0 1px var(--line); }
+.rating { display: grid; gap: 22px; padding: 26px; border-radius: var(--r-xl); background: var(--white); box-shadow: 0 0 0 1px var(--line); }
 .rating-top { display: grid; justify-items: center; gap: 14px; text-align: center; }
 .rating-dial { position: relative; width: min(190px, 60vw); aspect-ratio: 1; display: grid; place-items: center; }
 .rating-face { width: 76%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; align-content: center; gap: 10px; background: var(--white); box-shadow: 0 0 0 1px rgba(11, 42, 111, .06), 0 30px 60px -36px rgba(11, 42, 111, .45); }
@@ -451,7 +417,7 @@ a.strip-value:hover { color: var(--red); }
   .seal-dial, .marquee-track, .thread-glint, .rating-dial .dial, .m-ping { animation: none !important; }
   .js .hero-title .line > span, .js .hero-in, .js .hero-seal, .js .hero-logo, .js .hero-strip::before { animation: none !important; opacity: 1; transform: none; scale: 1; rotate: 0deg; }
   .js .thread-draw { animation: none !important; stroke-dashoffset: 0; stroke-opacity: .3; }
-  .hero-seal, .about-float { translate: none !important; transform: none !important; }
+  .hero-seal { translate: none !important; transform: none !important; }
 }
 
 /* ---------- Booking: sending states ---------- */
@@ -565,7 +531,6 @@ a.strip-value:hover { color: var(--red); }
 
   /* Things that spin or follow the scroll stay still on phones */
   .seal-dial, .rating-dial .dial, .pop-seal .dial { animation: none; }
-  .about-float { transform: none !important; }
 
 
   /* How we treat you */
@@ -579,13 +544,6 @@ a.strip-value:hover { color: var(--red); }
   .flow-step p { font-size: 1rem; }
 
   /* About: a smaller collage */
-  .about-grid { gap: 36px; }
-  .about-collage { max-width: 320px; padding: 0 16% 12% 0; }
-  .about-photo { aspect-ratio: 1; }
-  .about-chip { left: 0; bottom: 4%; padding: 8px 14px 8px 8px; gap: 10px; }
-  .about-chip-mark { width: 34px; height: 34px; }
-  .about-chip strong { font-size: 1rem; }
-  .stats { margin-top: 28px; }
 
 
   /* Services and doctors: one card at a time, swiped sideways, the next one peeking in */
