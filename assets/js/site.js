@@ -525,6 +525,28 @@
     });
   });
 
+  /* ---------- Booking times: one session at a time; if every slot left today is in the other session, switch to it ---------- */
+  $$('.session-switch').forEach(sw => {
+    const form = sw.closest('form'), btns = $$('.session-btn', sw);
+    const groups = btns.map(b => document.getElementById(b.getAttribute('aria-controls')));
+    const show = i => {
+      btns.forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
+      groups.forEach((g, j) => { g.hidden = j !== i; if (j === i) { g.classList.remove('is-entering'); void g.offsetWidth; g.classList.add('is-entering'); } });
+    };
+    sw.hidden = false;
+    form.classList.add('has-sessions');
+    btns.forEach((b, i) => b.addEventListener('click', () => show(i)));
+    // The booking script disables past slots on its own change handler, which runs first
+    form.elements.date?.addEventListener('change', () => {
+      const open = groups.map(g => $$('input:not(:disabled)', g).length);
+      const cur = btns.findIndex(b => b.getAttribute('aria-pressed') === 'true');
+      if (!open[cur]) { const next = open.findIndex(n => n > 0); if (next >= 0) show(next); }
+    });
+    // After a request is sent and the form clears, mornings show again
+    form.addEventListener('reset', () => setTimeout(() => show(0)));
+    show(0);
+  });
+
   /* ---------- Booking popup: once per visit, after a while on the page, never over something the visitor is doing ---------- */
   const pop = $('#book-pop');
   if (pop) {

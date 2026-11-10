@@ -703,3 +703,25 @@ a.strip-value:hover { color: var(--red); }
 .gallery-more[aria-expanded="true"] svg { rotate: -90deg; }
 /* Photos opened by "View more photos" rise in one after another */
 .bento > li.is-entering { animation: faqIn .5s var(--ease-out) both; animation-delay: calc(var(--k, 0) * 60ms); }
+
+/* ---------- Booking times: a Morning/Evening switch, one session's slots at a time ---------- */
+.session-switch { justify-self: start; display: inline-flex; gap: 4px; margin-bottom: 12px; padding: 4px; border-radius: 999px; background: var(--white); box-shadow: 0 0 0 1px #B9C4D8; }
+.session-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: none; color: var(--ink); font-size: var(--fs-small); font-weight: 600; cursor: pointer; transition: background-color .4s var(--ease-out), color .4s var(--ease-out); }
+.session-btn span { font-weight: 400; color: var(--slate); transition: color .4s var(--ease-out); }
+.session-btn:hover { background: var(--mist); }
+.session-btn[aria-pressed="true"] { background: var(--ink); color: var(--white); }
+.session-btn[aria-pressed="true"] span { color: var(--silver); }
+.has-sessions .slot-session { display: none; }
+.has-sessions .slot-group { display: block; margin: 0; }
+.slot-group.is-entering { animation: faqIn .4s var(--ease-out) both; }
+/* The slim call line stands in for the call box on phones */
+.book-alt { display: none; }
+@media (max-width: 759px) {
+  .session-switch { display: flex; width: 100%; }
+  .session-btn { flex: 1 1 0; justify-content: center; flex-direction: column; gap: 0; min-height: 50px; padding: 4px 8px; line-height: 1.25; }
+  .session-btn span { font-size: var(--fs-micro); }
+  .book .book-call { display: none; }
+  .book-alt { display: block; margin: 16px 2px 0; color: var(--slate); font-size: var(--fs-small); line-height: 1.6; text-align: center; max-width: none; }
+  .book-alt a { color: var(--ink); font-weight: 600; }
+  .book-note { font-size: var(--fs-micro); }
+}

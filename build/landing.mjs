@@ -354,6 +354,7 @@ const reviews = () => {
 };
 
 /* ---------- 8. Book an appointment: one short form, with the phone beside it ---------- */
+const shortTime = hhmm => { const [h, m] = hhmm.split(':').map(Number); return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'am' : 'pm'}`; };
 const svcFor = specialty => SERVICES.find(s => s.name === specialty)?.slug || '';
 const contact = () => `<section id="contact" class="section book" aria-labelledby="contact-title">
   <div class="wrap">
@@ -367,15 +368,16 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
     <div class="book-grid">
       <form id="appointment-form" class="book-form reveal" action="#" method="post" aria-describedby="form-note" ${bookingAttrs()}>
         <div class="form-grid">
-          <div class="field"><label for="f-name">Your name <span class="req">(required)</span></label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
-          <div class="field"><label for="f-phone">Phone number <span class="req">(required)</span></label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
+          <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
+          <div class="field"><label for="f-phone">Phone number</label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
           <div class="field"><label for="f-email">Email <span class="req">(for your confirmation)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
           <div class="field date-field"><label for="f-date">Preferred day <span class="req">(Mon to Sat)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
           <div class="field"><label for="f-service">Department <span class="req">(optional)</span></label><select id="f-service" name="service"><option value="">Not sure yet</option>${SERVICES.map(s => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
           <div class="field"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><input id="f-msg" name="message" placeholder="Fever for three days"></div>
           <fieldset class="field field-full slot-field" aria-describedby="e-time">
             <legend>Preferred time <span class="req">(${BOOKING.slotMinutes}-minute appointments)</span></legend>
-            ${BOOKING.sessions.map(sess => `<div class="slot-group">
+            <div class="session-switch" role="group" aria-label="Session" hidden>${BOOKING.sessions.map((sess, i) => `<button class="session-btn" type="button" aria-pressed="${i === 0}" aria-controls="slots-${i}">${sess[0]}<span>${shortTime(sess[1])} to ${shortTime(sess[2])}</span></button>`).join('')}</div>
+            ${BOOKING.sessions.map((sess, i) => `<div class="slot-group" id="slots-${i}">
               <p class="slot-session"><strong>${sess[0]}</strong> <span class="slot-range">${timeLabel(sess[1])} to ${timeLabel(sess[2])}</span></p>
               <div class="slot-row">${sessionSlots(sess).map(t => `<label class="slot"><input type="radio" name="time" value="${t}" required><span>${timeLabel(t)}</span></label>`).join('')}</div>
             </div>`).join('')}
@@ -388,8 +390,9 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         ${trapFields('page')}
         <div class="book-foot">
           <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
-          <p class="small book-note" id="form-note">This is a request, not a confirmed appointment. You will get an email once the hospital confirms it.</p>
+          <p class="small book-note" id="form-note">This is a request. We will email you once the hospital confirms a time.</p>
         </div>
+        <p class="book-alt">Prefer to call? <a href="tel:${PRIMARY.tel}">${PRIMARY.phone}</a>${EMERGENCY.available24h ? `. In an emergency, call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a> or come straight in, any time.` : '.'}</p>
         <div id="form-status" class="form-status" role="status" tabindex="-1" hidden></div>
       </form>
 

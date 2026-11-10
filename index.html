@@ -29,10 +29,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap">
-<link rel="stylesheet" href="assets/css/site.css?v=482f6e71b3">
-<link rel="stylesheet" href="assets/css/home.css?v=482f6e71b3">
+<link rel="stylesheet" href="assets/css/site.css?v=0b987d111d">
+<link rel="stylesheet" href="assets/css/home.css?v=0b987d111d">
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-<script src="assets/js/site.js?v=482f6e71b3" defer></script>
+<script src="assets/js/site.js?v=0b987d111d" defer></script>
 </head>
 <body class="home">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -640,18 +640,19 @@
     <div class="book-grid">
       <form id="appointment-form" class="book-form reveal" action="#" method="post" aria-describedby="form-note" data-booking data-endpoint="https://script.google.com/macros/s/AKfycby5nvfryN77hhQnPOOInQ4dlVIn1rTB7vC11l4UZhE-xcr3PhbhdliDxU-tStmvDYMu/exec" data-fallback="Online booking is not connected yet, so this request has not been sent. To book now, call reception on 08819 222250.">
         <div class="form-grid">
-          <div class="field"><label for="f-name">Your name <span class="req">(required)</span></label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
-          <div class="field"><label for="f-phone">Phone number <span class="req">(required)</span></label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
+          <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
+          <div class="field"><label for="f-phone">Phone number</label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
           <div class="field"><label for="f-email">Email <span class="req">(for your confirmation)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
           <div class="field date-field"><label for="f-date">Preferred day <span class="req">(Mon to Sat)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
           <div class="field"><label for="f-service">Department <span class="req">(optional)</span></label><select id="f-service" name="service"><option value="">Not sure yet</option><option value="general-medicine">General Medicine</option><option value="obstetrics-gynaecology">Obstetrics &amp; Gynaecology</option><option value="ultrasound">Ultrasound Scanning</option><option value="infertility">Infertility Treatment</option><option value="laparoscopic-surgery">Laparoscopic Surgery</option></select></div>
           <div class="field"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><input id="f-msg" name="message" placeholder="Fever for three days"></div>
           <fieldset class="field field-full slot-field" aria-describedby="e-time">
             <legend>Preferred time <span class="req">(30-minute appointments)</span></legend>
-            <div class="slot-group">
+            <div class="session-switch" role="group" aria-label="Session" hidden><button class="session-btn" type="button" aria-pressed="true" aria-controls="slots-0">Morning<span>10 am to 2 pm</span></button><button class="session-btn" type="button" aria-pressed="false" aria-controls="slots-1">Evening<span>5 pm to 8 pm</span></button></div>
+            <div class="slot-group" id="slots-0">
               <p class="slot-session"><strong>Morning</strong> <span class="slot-range">10:00 am to 2:00 pm</span></p>
               <div class="slot-row"><label class="slot"><input type="radio" name="time" value="10:00" required><span>10:00 am</span></label><label class="slot"><input type="radio" name="time" value="10:30" required><span>10:30 am</span></label><label class="slot"><input type="radio" name="time" value="11:00" required><span>11:00 am</span></label><label class="slot"><input type="radio" name="time" value="11:30" required><span>11:30 am</span></label><label class="slot"><input type="radio" name="time" value="12:00" required><span>12:00 pm</span></label><label class="slot"><input type="radio" name="time" value="12:30" required><span>12:30 pm</span></label><label class="slot"><input type="radio" name="time" value="13:00" required><span>1:00 pm</span></label><label class="slot"><input type="radio" name="time" value="13:30" required><span>1:30 pm</span></label></div>
-            </div><div class="slot-group">
+            </div><div class="slot-group" id="slots-1">
               <p class="slot-session"><strong>Evening</strong> <span class="slot-range">5:00 pm to 8:00 pm</span></p>
               <div class="slot-row"><label class="slot"><input type="radio" name="time" value="17:00" required><span>5:00 pm</span></label><label class="slot"><input type="radio" name="time" value="17:30" required><span>5:30 pm</span></label><label class="slot"><input type="radio" name="time" value="18:00" required><span>6:00 pm</span></label><label class="slot"><input type="radio" name="time" value="18:30" required><span>6:30 pm</span></label><label class="slot"><input type="radio" name="time" value="19:00" required><span>7:00 pm</span></label><label class="slot"><input type="radio" name="time" value="19:30" required><span>7:30 pm</span></label></div>
             </div>
@@ -662,8 +663,9 @@
         <input type="hidden" name="source" value="page"><div class="trap" aria-hidden="true"><label>Company<input name="company" tabindex="-1" autocomplete="off"></label></div>
         <div class="book-foot">
           <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
-          <p class="small book-note" id="form-note">This is a request, not a confirmed appointment. You will get an email once the hospital confirms it.</p>
+          <p class="small book-note" id="form-note">This is a request. We will email you once the hospital confirms a time.</p>
         </div>
+        <p class="book-alt">Prefer to call? <a href="tel:+918819222250">08819 222250</a>. In an emergency, call <a href="tel:108">108</a> or come straight in, any time.</p>
         <div id="form-status" class="form-status" role="status" tabindex="-1" hidden></div>
       </form>
 
