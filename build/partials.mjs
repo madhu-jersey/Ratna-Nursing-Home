@@ -24,6 +24,9 @@ ${sym('i-menu', '<path d="M4 8h16M4 16h16"/>')}
 ${sym('i-pause', '<path d="M9 6v12M15 6v12"/>')}
 ${sym('i-play', '<path d="M8 5.5v13l10-6.5z"/>')}
 ${sym('i-image', '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/>')}
+${sym('i-check', '<path d="m5.5 12.5 4 4L18.5 7.5"/>')}
+${sym('i-ambulance', '<path d="M3 16.5v-8a1 1 0 0 1 1-1h10v9.5"/><path d="M14 10.5h3.6l2.9 3.4v3.1h-1.6"/><path d="M8 17h5.5"/><circle cx="6" cy="17.2" r="1.8"/><circle cx="16.5" cy="17.2" r="1.8"/><path d="M8.5 9.6v4M6.5 11.6h4"/>')}
+${sym('i-users', '<circle cx="9" cy="8" r="3"/><path d="M3.5 19.5c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="16.8" cy="9" r="2.4"/><path d="M15.8 14.3c2.5-.3 4.3 1.3 4.9 4.2"/>')}
 ${sym('i-person', '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>')}
 <symbol id="i-star" viewBox="0 0 24 24"><path fill="currentColor" d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1L3.2 9.4l6.1-.8z"/></symbol>
 <symbol id="i-star-o" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1L3.2 9.4l6.1-.8z"/></symbol>
@@ -185,8 +188,9 @@ export const footer = (R = '') => `<footer class="site-footer">
         <a class="footer-mark" href="${R}./"><span class="footer-face"><img class="footer-logo" src="${R}assets/img/logo-240.png" alt="" width="240" height="134" loading="lazy" decoding="async"></span><span class="footer-name">${esc(SITE.name)}</span></a>
         <p class="footer-tagline">${esc(SITE.tagline)}</p>
         <div class="socials" aria-label="Social media (to be confirmed)">
-          <span>Instagram, to be confirmed</span><span>Facebook, to be confirmed</span><span>YouTube, to be confirmed</span>
+          <span>Instagram</span><span>Facebook</span><span>YouTube</span>
         </div>
+        <p class="socials-note">Social links to be confirmed</p>
       </div>
       <div>
         <h2>${BRANCHES.length > 1 ? 'Branches' : 'Visit'}</h2>
@@ -216,11 +220,30 @@ const BUILD = createHash('sha1')
   .update(['css/site.css', 'css/home.css', 'js/site.js'].map(f => readFileSync(new URL(`../assets/${f}`, import.meta.url))).join(''))
   .digest('hex').slice(0, 10);
 
-export const head = ({ title, description, R = '', extraCss = [] }) => `<meta charset="utf-8">
+/* Every page: title, description, the canonical address, social previews, location and structured data */
+export const head = ({ title, description, R = '', extraCss = [], path = '', jsonLd = [] }) => `<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
+<link rel="canonical" href="${SITE.url}/${path}">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#0B2A6F">
+<link rel="icon" href="${R}assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="${R}assets/img/logo-240.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="${esc(SITE.name)}">
+<meta property="og:locale" content="en_IN">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(description)}">
+<meta property="og:url" content="${SITE.url}/${path}">
+<meta property="og:image" content="${SITE.url}/assets/img/logo.png">
+<meta property="og:image:alt" content="${esc(SITE.name)} logo">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="geo.region" content="IN-AP">
+<meta name="geo.placename" content="${esc(SITE.town)}">
+<meta name="geo.position" content="${PRIMARY.geo.join(';')}">
+<meta name="ICBM" content="${PRIMARY.geo.join(', ')}">
+${jsonLd.map(o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`).join('\n')}
 <script>document.documentElement.className='js'</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

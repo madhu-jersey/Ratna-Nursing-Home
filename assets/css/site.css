@@ -428,6 +428,7 @@ p { margin: 0 0 1em; max-width: 68ch; }
 .footer-branch a:hover { text-decoration: underline; text-decoration-color: var(--red); text-underline-offset: 5px; }
 .footer-branch span { font-family: var(--sans); font-size: var(--fs-micro); color: var(--silver); }
 .socials { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.socials-note { margin: -4px 0 0; color: var(--silver); font-size: var(--fs-micro); opacity: .8; }
 .socials span { display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border: 1px dashed var(--steel); border-radius: 999px; color: var(--silver); font-size: var(--fs-micro); }
 .footer-bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--steel); color: var(--silver); font-size: var(--fs-micro); }
 .footer-bottom p { margin: 0; }

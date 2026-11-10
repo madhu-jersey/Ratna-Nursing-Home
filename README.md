@@ -12,6 +12,7 @@ npm start        # preview at http://localhost:4173
 - `build/services-content.mjs`: draft medical copy for the five department pages. `[text]` renders as a placeholder chip.
 - `build/landing.mjs`: the animated hero (headline rising line by line, live 3D mother-and-child accent, floating cards, pulse line, cursor spotlight), the department marquee, and the nine landing sections.
 - `build/service-template.mjs`: the one template used for all department pages.
+- `build/seo.mjs`: search-engine data: the hospital's structured data, the FAQ and breadcrumb data, `sitemap.xml` and `robots.txt`. Canonical links and the sitemap use `SITE.url` in `data.mjs`; change it there when a custom domain is added.
 - `build/partials.mjs`: header, footer, address cards, icon sprite, silver department marks and the PC-PNDT note.
 - `assets/css/site.css`: tokens and all styles. The palette is Navy `#16324B` and Butter `#F3EDDD`: navy on butter for light sections, butter on navy for dark ones (the accent token is still named `--red` so the rest of the file is unchanged).
 - `assets/js/site.js`: progressive interactions (word-by-word heading reveals, card reveals, hero spotlight and card depth, tilt, magnetic buttons, parallax, gallery, lightbox, carousel, FAQ, form). With reduced motion turned on in the OS, everything appears at once and nothing loops.

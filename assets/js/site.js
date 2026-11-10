@@ -109,38 +109,6 @@
     $$('.reveal, .reveal-mask, .reveal-draw').forEach(el => io.observe(el));
   }
 
-  /* ---------- Departments: on wide screens the section pins and the cards travel sideways with scroll ---------- */
-  const depts = $('.depts'), track = $('.depts-track');
-  if (depts && track) {
-    const wide = matchMedia('(min-width: 960px)');
-    const fill = $('.dp-fill', depts);
-    if (motionOK() && 'IntersectionObserver' in window) {
-      const dio = new IntersectionObserver(([en]) => { if (en.isIntersecting) { depts.classList.add('is-in'); dio.disconnect(); } }, { threshold: .15 });
-      dio.observe(depts);
-    } else depts.classList.add('is-in');
-    let travel = 0, pinned = false, queued = false;
-    const paint = () => {
-      queued = false;
-      if (!pinned) return;
-      const p = Math.min(1, Math.max(0, -depts.getBoundingClientRect().top / travel));
-      track.style.transform = `translate3d(${(-p * travel).toFixed(1)}px, 0, 0)`;
-      if (fill) fill.style.strokeDashoffset = (1 - p).toFixed(3);
-    };
-    const measure = () => {
-      pinned = wide.matches && motionOK();
-      depts.classList.toggle('is-pinned', pinned);
-      if (!pinned) { depts.style.height = ''; track.style.transform = ''; if (fill) fill.style.strokeDashoffset = ''; return; }
-      travel = Math.max(1, track.scrollWidth - innerWidth);
-      depts.style.height = `${innerHeight + travel}px`;
-      paint();
-    };
-    addEventListener('scroll', () => { if (pinned && !queued) { queued = true; requestAnimationFrame(paint); } }, { passive: true });
-    addEventListener('resize', measure);
-    wide.addEventListener('change', measure);
-    document.fonts?.ready.then(measure);
-    measure();
-  }
-
   /* ---------- How we treat you: the step in the middle of the screen lights up; the rail fills behind it ---------- */
   const flow = $('.steps-wrap');
   if (flow && motionOK() && 'IntersectionObserver' in window) {
@@ -229,17 +197,70 @@
     io.observe(el);
   });
 
-  /* ---------- FAQ accordion ---------- */
-  $$('.acc-btn').forEach(btn => {
+  /* ---------- FAQ accordion: in a [data-single] list, opening one answer closes the others ---------- */
+  const setAcc = (btn, open) => {
     const panel = document.getElementById(btn.getAttribute('aria-controls'));
     if (!panel) return;
-    const set = open => {
-      btn.setAttribute('aria-expanded', String(open));
-      panel.classList.toggle('is-open', open);
-      panel.inert = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    panel.classList.toggle('is-open', open);
+    panel.inert = !open;
+  };
+  $$('.acc-btn').forEach(btn => {
+    setAcc(btn, btn.getAttribute('aria-expanded') === 'true');
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('aria-expanded') !== 'true';
+      const list = btn.closest('.accordion');
+      if (open && list?.hasAttribute('data-single')) $$('.acc-btn[aria-expanded="true"]', list).forEach(b => b !== btn && setAcc(b, false));
+      setAcc(btn, open);
+    });
+  });
+
+  /* ---------- FAQ topics: show one topic's questions; the rest close and step aside ---------- */
+  const faqTopics = $$('.faq-topic');
+  if (faqTopics.length) {
+    const items = $$('.faq .acc-item'), status = $('[data-faq-status]');
+    faqTopics.forEach(chip => chip.addEventListener('click', () => {
+      const t = chip.dataset.topic;
+      faqTopics.forEach(c => c.setAttribute('aria-pressed', String(c === chip)));
+      let shown = 0;
+      items.forEach(item => {
+        const show = t === 'all' || item.dataset.topic === t;
+        if (!show) { const b = $('.acc-btn', item); if (b) setAcc(b, false); }
+        item.hidden = !show;
+        if (show) { item.style.setProperty('--k', shown++); item.classList.remove('is-entering'); void item.offsetWidth; item.classList.add('is-entering'); }
+      });
+      if (status) status.textContent = `${shown} question${shown === 1 ? '' : 's'} shown`;
+      chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: motionOK() ? 'smooth' : 'auto' });
+    }));
+  }
+
+  /* ---------- Swipe rows (phones): a dot per card, tap to jump, the dots follow the swipe ---------- */
+  const narrow = matchMedia('(max-width: 759px)');
+  $$('[data-swipe]').forEach(row => {
+    const cards = [...row.children], label = row.getAttribute('aria-label') || 'Cards';
+    if (cards.length < 2) return;
+    const nav = document.createElement('div');
+    nav.className = 'swipe-dots';
+    nav.setAttribute('aria-label', `${label}: choose a card`);
+    const dots = cards.map((card, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'swipe-dot';
+      b.setAttribute('aria-label', `Show ${i + 1} of ${cards.length}`);
+      b.addEventListener('click', () => row.scrollTo({ left: card.offsetLeft - row.offsetLeft - parseFloat(getComputedStyle(row).paddingLeft), behavior: motionOK() ? 'smooth' : 'auto' }));
+      nav.appendChild(b);
+      return b;
+    });
+    row.after(nav);
+    let queued = false;
+    const mark = () => {
+      queued = false;
+      const step = cards[1].offsetLeft - cards[0].offsetLeft || 1;
+      const at = Math.min(cards.length - 1, Math.round(row.scrollLeft / step));
+      dots.forEach((d, i) => d.setAttribute('aria-current', String(i === at)));
     };
-    set(btn.getAttribute('aria-expanded') === 'true');
-    btn.addEventListener('click', () => set(btn.getAttribute('aria-expanded') !== 'true'));
+    row.addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(mark); } }, { passive: true });
+    narrow.addEventListener('change', mark);
+    mark();
   });
 
   /* ---------- Gallery: tabs ---------- */

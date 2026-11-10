@@ -2,6 +2,7 @@
 import { SITE, BRANCHES, PRIMARY, SERVICES, EMERGENCY } from './data.mjs';
 import { esc, tbc, icon, sprite, header, footer, head, contactCard, callBar, serviceMark, callLabel, pcpndtNote } from './partials.mjs';
 import { accordion } from './landing.mjs';
+import { breadcrumbLd } from './seo.mjs';
 
 const R = '../../';
 const DRAFT = 'Draft, pending doctor review';
@@ -18,7 +19,13 @@ export const servicePage = (svc, c) => {
   return `<!doctype html>
 <html lang="en" class="no-js">
 <head>
-${head({ title: `${svc.name} | ${SITE.name}`, description: `${c.lead} ${SITE.name}, ${SITE.town}.`, R })}
+${head({
+  title: `${svc.name} in ${SITE.town} | ${SITE.name}`,
+  // Search results show about 160 characters, so the phone number goes in only when it fits
+  description: [`${c.lead} At ${SITE.name}, ${PRIMARY.addressLines[1]}, ${SITE.town}.`, `Call ${PRIMARY.phone}.`].reduce((a, b) => (a + ' ' + b).length <= 160 ? `${a} ${b}` : a),
+  R, path: `services/${svc.slug}/`,
+  jsonLd: [breadcrumbLd([['Home', ''], ['Services', '#services'], [svc.name, `services/${svc.slug}/`]])]
+})}
 </head>
 <body>
 ${sprite()}

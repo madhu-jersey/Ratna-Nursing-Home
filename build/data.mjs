@@ -6,6 +6,8 @@ export const SITE = {
   descriptor: 'Nursing Home',
   abbr: 'RNH',
   tagline: 'General medicine, obstetrics, gynaecology and women\'s health, for Tanuku and the surrounding areas.',
+  url: 'https://ratna-nursing-home.vercel.app', // the live address: canonical links, sitemap and social previews. Change it when a custom domain is added.
+  state: 'Andhra Pradesh',
   town: 'Tanuku',
   region: 'West Godavari, Andhra Pradesh',
   established: null,   // TODO(client): year established
@@ -81,11 +83,18 @@ export const SERVICES = [
   { slug: 'laparoscopic-surgery', name: 'Laparoscopic Surgery', kind: 'scope', pcpndt: false, summary: 'Keyhole operations through small cuts, for a shorter stay and quicker recovery.' }
 ];
 
+// Areas of care shown on each doctor's card, taken from their department's scope.
+// TODO(client): each doctor can confirm or narrow their own list.
+const AREAS = {
+  medicine: ['Diabetes, thyroid and blood pressure', 'Fever, infections, breathing and kidney problems'],
+  women: ['Pregnancy care, normal and caesarean delivery', 'Periods, PCOD and other women\'s health problems']
+};
+
 export const DOCTORS = [
-  { branch: 'sajjapuram', name: 'Dr. Valluri Soma Sekhar', qualification: 'M.B.B.S., D.C.H., M.D. (General Medicine)', specialty: 'General Medicine', regNo: '16999', bio: null },
-  { branch: 'sajjapuram', name: 'Dr. Valluri Subba Lakshmi', qualification: 'M.B.B.S., D.G.O.', specialty: 'Obstetrics & Gynaecology', regNo: '18120', bio: null },
-  { branch: 'sajjapuram', name: 'Dr. Valluri Amrutha Ratna', qualification: 'M.B.B.S., M.S. (OB-GYN), Gold Medal', specialty: 'Obstetrics & Gynaecology', regNo: '85666', bio: null },
-  { branch: 'sajjapuram', name: 'Dr. Bikkina Ghana Syam', qualification: 'M.B.B.S., M.D. (General Medicine)', specialty: 'General Medicine', regNo: '78473', bio: null }
+  { branch: 'sajjapuram', name: 'Dr. Valluri Soma Sekhar', qualification: 'M.B.B.S., D.C.H., M.D. (General Medicine)', specialty: 'General Medicine', regNo: '16999', bio: null, areas: AREAS.medicine },
+  { branch: 'sajjapuram', name: 'Dr. Valluri Subba Lakshmi', qualification: 'M.B.B.S., D.G.O.', specialty: 'Obstetrics & Gynaecology', regNo: '18120', bio: null, areas: AREAS.women },
+  { branch: 'sajjapuram', name: 'Dr. Valluri Amrutha Ratna', qualification: 'M.B.B.S., M.S. (OB-GYN), Gold Medal', specialty: 'Obstetrics & Gynaecology', regNo: '85666', bio: null, areas: AREAS.women },
+  { branch: 'sajjapuram', name: 'Dr. Bikkina Ghana Syam', qualification: 'M.B.B.S., M.D. (General Medicine)', specialty: 'General Medicine', regNo: '78473', bio: null, areas: AREAS.medicine }
 ];
 
 // From the brochure; every item still needs the hospital to verify it before publishing
@@ -109,4 +118,34 @@ export const REVIEWS = [
   { name: 'Satya Perikala', text: 'The staff were caring and professional, and the Dr.Amrutha madam took time to explain everything clearly. I was very impressed with the efficiency and quality of care from start to finish. Thank you so much madam for give a good treatment \u{1F64F}' },
   { name: 'Sardhar Nani', text: 'Dr. Ghanashyam sir and  Dr. Amrutharatna madam very polite and friendly with patients. The doctors Treated was excellent.  Staff are very responsibility.' },
   { name: 'kalyani paricherla', text: 'They Will treat patients very well and maintaining with good staff, very good hospitality' }
+];
+
+// The services section: three groups, each a ticked list. `slug` links an item to its department page.
+export const SERVICE_GROUPS = [
+  { title: 'Medical and surgical care', mark: 'stethoscope', items: [
+    { text: 'General medicine', slug: 'general-medicine' },
+    { text: 'Diabetes, thyroid and blood pressure care' },
+    { text: 'Fever, infections and breathing problems' },
+    { text: 'Kidney problems' },
+    { text: 'Laparoscopic (keyhole) surgery', slug: 'laparoscopic-surgery' },
+    { text: '24-hour emergency care' }
+  ] },
+  { title: 'Women\'s and pregnancy care', mark: 'cradle', items: [
+    { text: 'Obstetrics and gynaecology', slug: 'obstetrics-gynaecology' },
+    { text: 'Pregnancy check-ups (antenatal care)' },
+    { text: 'Ultrasound scanning', slug: 'ultrasound' },
+    { text: 'Electronic fetal monitoring' },
+    { text: 'Normal and caesarean delivery' },
+    { text: 'PCOD and period problems' },
+    { text: 'Infertility treatment', slug: 'infertility' }
+  ] },
+  { title: 'Facilities and support', mark: 'cross', facilities: true, items: ['Outpatient services', 'Inpatient care', 'General ward', 'Post-operative care', 'Oxygen support', 'Pharmacy', 'ECG'].map(text => ({ text })) }
+];
+
+// "Why choose": four short reasons, each drawn from facts stated elsewhere on the site
+export const WHY = [
+  { icon: 'i-ambulance', title: '24-hour emergency care', text: 'The emergency department is open day and night, every day of the year, including Sundays.' },
+  { icon: 'i-users', title: 'Experienced specialists', text: 'Two general physicians and two gynaecologists, including a gold-medal OB-GYN surgeon, see every patient in person.' },
+  { icon: 'p-pregnant', title: 'Mother and baby care', text: 'Pregnancy check-ups, scans, fetal monitoring and delivery, all at one hospital close to home.' },
+  { icon: 'p-monitor', title: 'Scans and tests on site', text: 'Ultrasound, ECG and a pharmacy in the same building, so your doctor sees results sooner.' }
 ];

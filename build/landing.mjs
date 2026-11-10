@@ -1,5 +1,6 @@
-import { SITE, BRANCHES, PRIMARY, SERVICES, DOCTORS, FACILITIES, EMERGENCY, REVIEWS, BOOKING, timeLabel, sessionSlots } from './data.mjs';
+import { SITE, BRANCHES, PRIMARY, SERVICES, SERVICE_GROUPS, WHY, DOCTORS, FACILITIES, EMERGENCY, REVIEWS, BOOKING, timeLabel, sessionSlots } from './data.mjs';
 import { esc, tbc, icon, sprite, header, footer, head, callBar, serviceMark, dial, BEAT } from './partials.mjs';
+import { hospitalLd, faqLd } from './seo.mjs';
 
 const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
 const count = n => NUM[n] || String(n);
@@ -54,31 +55,43 @@ const heroSlot = () => `<!-- HERO. If an approved hero design arrives, it replac
   <div class="marquee-track">${[0, 1].map(() => `<span class="marquee-group">${SERVICES.map(s => `<span>${esc(s.name)}</span>${icon('m-cross', 'marquee-cross')}`).join('')}</span>`).join('')}</div>
 </div>`;
 
-/* ---------- 1. Departments: white cards slide sideways while the page scrolls down (pinned on desktop) ---------- */
-const services = () => `<section id="services" class="depts" aria-labelledby="services-title">
-  <div class="depts-pin">
-    <div class="wrap depts-head">
+/* ---------- 1. Services: three groups, each a ticked list; items with a department page link to it ---------- */
+const services = () => `<section id="services" class="section services" aria-labelledby="services-title">
+  <div class="wrap">
+    <div class="section-head">
       <div class="reveal">
-        <p class="eyebrow">Departments</p>
-        <h2 id="services-title">${cap(count(SERVICES.length))} departments, one family of doctors</h2>
+        <p class="eyebrow">Services</p>
+        <h2 id="services-title">Medical, surgical and maternity care in ${esc(SITE.town)}</h2>
       </div>
-      <div class="depts-side reveal">
-        <p class="intro">From a fever to a pregnancy to keyhole surgery, your care stays with the same hospital and the same records.</p>
-        <svg class="depts-progress" viewBox="0 0 400 40" preserveAspectRatio="none" fill="none" aria-hidden="true"><path class="dp-base" d="${BEAT}"/><path class="dp-fill" pathLength="1" d="${BEAT}"/></svg>
-      </div>
+      <p class="intro reveal">From a fever to a pregnancy to keyhole surgery, your care stays with the same hospital and the same records.</p>
     </div>
-    <div class="depts-viewport">
-      <ul class="depts-track" role="list">
-        ${SERVICES.map((s, i) => `<li class="dcard" style="--i:${i}">
-          <a class="dcard-link" href="${R}services/${s.slug}/">
-            <span class="dcard-medal">${dial('dcard-dial')}<span class="dcard-face" style="view-transition-name: accent-${s.slug}">${serviceMark(s.kind)}</span></span>
-            <span class="dcard-name">${esc(s.name)}</span>
-            <span class="dcard-summary">${esc(s.summary)}</span>
-            <span class="dcard-cta"><span>Explore the department</span>${icon('i-arrow')}</span>
-          </a>
-        </li>`).join('')}
-      </ul>
+    <div class="svc-groups" data-stagger data-swipe role="group" aria-label="Service groups">
+      ${SERVICE_GROUPS.map(g => `<article class="svc-group">
+        <span class="svc-mark">${serviceMark(g.mark)}</span>
+        <h3>${esc(g.title)}</h3>
+        <ul class="tick-list" role="list">${g.items.map(it => `<li>${icon('i-check', 'tick')}${it.slug
+          ? `<a href="${R}services/${it.slug}/">${esc(it.text)}</a>`
+          : `<span>${esc(it.text)}</span>`}</li>`).join('')}</ul>
+        ${g.facilities && !FACILITIES.verified ? tbc('List to be verified with the hospital') : ''}
+      </article>`).join('')}
     </div>
+  </div>
+</section>`;
+
+/* ---------- 1b. Why choose: four reasons, the logo standing in for the name ---------- */
+const why = () => `<section class="section why" aria-labelledby="why-title">
+  <div class="wrap">
+    <div class="why-head reveal">
+      <h2 id="why-title">Why choose <img class="why-logo" src="${R}assets/img/logo-240.png" alt="${esc(SITE.name)}" width="240" height="134" loading="lazy" decoding="async"></h2>
+      <p class="intro">What families in and around ${esc(SITE.town)} can count on, every time they walk in.</p>
+    </div>
+    <ul class="why-grid" role="list" data-stagger>
+      ${WHY.map(w => `<li class="why-card">
+        <span class="why-icon">${icon(w.icon)}</span>
+        <h3>${esc(w.title)}</h3>
+        <p>${esc(w.text)}</p>
+      </li>`).join('')}
+    </ul>
   </div>
 </section>`;
 
@@ -133,11 +146,6 @@ const about = () => `<section id="about" class="section about" aria-labelledby="
       <p class="eyebrow reveal">About the hospital</p>
       <h2 id="about-title" class="reveal">A family hospital for ${esc(SITE.town)}</h2>
       <p class="reveal">General physicians and gynaecologists work under one roof, so a mother-to-be, a parent with diabetes and a young couple hoping for a child can all be seen by the right doctor, close to home. Scans, reports and follow-ups stay together at one hospital, from the first consultation to discharge.</p>
-      ${FACILITIES.items.length ? `<div class="facilities reveal">
-        <h3>Facilities</h3>
-        <ul class="facility-list" role="list">${FACILITIES.items.map(f => `<li>${icon('m-cross')}<span>${esc(f)}</span></li>`).join('')}</ul>
-        ${FACILITIES.verified ? '' : tbc('List to be verified with the hospital')}
-      </div>` : ''}
       <div class="stats" data-stagger>
         ${SITE.stats.map(st => `<div class="stat">
           <span class="stat-value"${st.value != null ? ` data-count="${st.value}" data-suffix="${st.suffix}" data-confirmed="${st.confirmed}"` : ''}>${st.value != null ? Number(st.value).toLocaleString('en-IN') + st.suffix : '&ndash;'}</span>
@@ -149,24 +157,26 @@ const about = () => `<section id="about" class="section about" aria-labelledby="
   </div>
 </section>`;
 
-/* ---------- 4. Doctors: a small dial portrait until photos arrive ---------- */
+/* ---------- 4. Doctors: one wide card each, the portrait alternating sides; a dial with initials until photos arrive ---------- */
 const initials = name => name.replace(/^Dr\.?\s*/, '').split(/\s+/).slice(-2).map(w => w[0]).join('');
 const doctorCard = d => {
   const b = BRANCHES.find(x => x.id === d.branch);
-  return `<article class="doc">
-    <div class="doc-portrait">
+  return `<article class="doc-card reveal">
+    <div class="doc-photo">
       ${dial('doc-dial', 72)}
       <span class="doc-face"><span class="doc-initials" aria-hidden="true">${esc(initials(d.name))}</span></span>
       <span class="doc-photo-note">Photo to be supplied</span>
     </div>
-    <div class="doc-body">
-      <p class="doc-dept">${esc(d.specialty)}${d.specialtyTbc ? ` ${tbc('To be confirmed', 'tbc-inline')}` : ''}</p>
+    <div class="doc-info">
+      <p class="doc-dept">${esc(d.specialty)}</p>
       <h3 class="doc-name">${esc(d.name)}</h3>
-      <p class="doc-qual">${esc(d.qualification)}</p>
-      ${d.regNo ? `<p class="doc-reg">Reg. No. ${esc(d.regNo)}</p>` : ''}
-      ${d.nameNote ? `<p class="name-note">${tbc(d.nameNote)}</p>` : ''}
+      <p class="doc-qual">${esc(d.qualification)}${d.regNo ? `<span class="doc-reg">Reg. No. ${esc(d.regNo)}</span>` : ''}</p>
       ${d.bio ? `<p class="doc-bio">${esc(d.bio)}</p>` : ''}
-      <a class="btn btn-ghost doc-book" href="#contact" data-book-doctor="${esc(d.name)}" data-branch="${b.id}" data-service="${svcFor(d.specialty)}"><span>Book with this doctor</span><span class="visually-hidden">: ${esc(d.name)}</span></a>
+      ${d.areas?.length ? `<h4 class="doc-areas-title">Areas of care</h4>
+      <ul class="tick-list doc-areas" role="list">${d.areas.map(a => `<li>${icon('i-check', 'tick')}<span>${esc(a)}</span></li>`).join('')}</ul>` : ''}
+      ${b.hours ? `<h4 class="doc-times-title">OPD${b.days ? `, ${b.days}` : ''}</h4>
+      <ul class="doc-times" role="list">${b.hours.map(([s, h]) => `<li>${icon('i-clock')}<span>${s}, ${h}</span></li>`).join('')}</ul>` : ''}
+      <a class="btn btn-primary doc-book" href="#contact" data-book-doctor="${esc(d.name)}" data-branch="${b.id}" data-service="${svcFor(d.specialty)}"><span>Book with this doctor</span><span class="visually-hidden">: ${esc(d.name)}</span></a>
     </div>
   </article>`;
 };
@@ -176,14 +186,11 @@ const doctors = () => `<section id="doctors" class="section doctors" aria-labell
     <div class="section-head">
       <div class="reveal">
         <p class="eyebrow">Consultants and doctors</p>
-        <h2 id="doctors-title">The people you will see</h2>
+        <h2 id="doctors-title">Doctors at ${esc(SITE.name)}</h2>
       </div>
-      <p class="intro reveal">Choose a doctor here and we will add their name to your appointment request. Photos and short biographies are on the way.</p>
+      <p class="intro reveal">General physicians and gynaecologists in ${esc(SITE.town)}. Choose a doctor and we will add their name to your appointment request.</p>
     </div>
-    ${BRANCHES.map(b => `<div class="branch-group">
-      ${BRANCHES.length > 1 ? `<div class="branch-group-head"><h3>${esc(b.name)}</h3>${b.confirmed ? '' : tbc('Team to be confirmed')}</div>` : ''}
-      <div class="doc-grid" data-stagger>${DOCTORS.filter(d => d.branch === b.id && d.name).map(doctorCard).join('')}</div>
-    </div>`).join('')}
+    <div class="doc-list" data-swipe role="group" aria-label="Doctors">${DOCTORS.filter(d => d.name).map(doctorCard).join('')}</div>
   </div>
 </section>`;
 
@@ -409,39 +416,71 @@ const bookingPopup = () => `<div id="book-pop" class="book-pop" role="dialog" ar
   </div>
 </div>`;
 
-/* ---------- 9. FAQ ---------- */
+/* ---------- 9. FAQ: the questions people search for first, answered from the facts above ---------- */
+const docsIn = specialty => DOCTORS.filter(d => d.specialty === specialty).map(d => `${d.name} (${d.qualification})`).join(' and ');
+const svcLink = (slug, text) => `<a href="${R}services/${slug}/">${text}</a>`;
+const opd = PRIMARY.hours ? `${PRIMARY.days ? `${PRIMARY.days}, ` : ''}${PRIMARY.hours.map(([d, h]) => `${d.toLowerCase()} ${h}`).join(' and ')}` : '';
+// [question, answer, topic]. Topics drive the filter chips; the order is what people ask first.
 const FAQ = [
-  ['How do I book an appointment?', `<p>Call reception on <a href="tel:${PRIMARY.tel}">${PRIMARY.phone}</a>${PRIMARY.mobiles?.length ? ` or ${PRIMARY.mobiles.map(m => `<a href="tel:${m.tel}">${m.phone}</a>`).join(' or ')}` : ''}, or send a request with the form above and we will call you back to confirm a time.</p>${PRIMARY.hours ? `<p>OPD timings${PRIMARY.days ? `, ${PRIMARY.days}` : ''}: ${PRIMARY.hours.map(([d, h]) => `${d.toLowerCase()} ${h}`).join(', ')}.${PRIMARY.days ? ' OPD is closed on Sunday.' : ''}</p>` : ''}<p>${tbc('Call-back times to be confirmed')}</p>`],
-  ['What happens at my first visit?', `<p>The doctor asks about your concern and your medical history, examines you, and may suggest blood tests, an ECG or a scan. You will hear what we found and the options before any treatment begins.</p><p>${tbc('Draft, to be confirmed by the hospital')}</p>`],
-  ['What should I bring?', `<p>An ID proof, any earlier reports, scans and prescriptions, a list of medicines you take, and your insurance card if you have one. In pregnancy, bring your antenatal card and all scan reports.</p><p>${tbc('Draft, to be confirmed by the hospital')}</p>`],
-  ['How can I pay?', `<p>Accepted payment methods ${tbc('to be confirmed with client', 'tbc-inline')}</p><p>Insurance, cashless and government scheme options ${tbc('to be confirmed with client', 'tbc-inline')}</p>`],
-  ['What should I do in an emergency?', `<p>For chest pain, sudden weakness of the face or arm, trouble breathing, a fit, heavy bleeding, or bleeding or severe pain in pregnancy, call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a> for an ambulance or go to the nearest emergency department straight away.</p><p>${EMERGENCY.available24h ? `Our emergency department is open 24 hours, every day, including Sundays and holidays.${EMERGENCY.tel ? ` Call the hospital any time on <a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>.` : ` ${tbc('Emergency phone number to be confirmed', 'tbc-inline')}`}` : tbc('Casualty hours and emergency number to be confirmed')}</p>`],
-  ['What are the visiting hours?', `<p>${tbc('Visiting hours and the number of attendants allowed to be confirmed')}</p>`],
-  ['Will the scan tell us whether the baby is a boy or a girl?', `<p>No. Telling the sex of an unborn baby is against the law in India under the PC &amp; PNDT Act, and it is not done at this hospital. Scans in pregnancy check the baby's growth, position and well-being.</p>`],
-  ['Which doctor should I see?', `<p>For fever, sugar, thyroid, blood pressure, breathing or kidney problems, see a general physician. For pregnancy, periods, PCOD or difficulty conceiving, see a gynaecologist. If you are not sure, call reception and we will guide you.</p>`]
+  [`Which gynaecologists are available at ${SITE.name}, ${SITE.town}?`, `<p>${docsIn('Obstetrics & Gynaecology')} see patients for pregnancy check-ups, normal and caesarean delivery, periods, PCOD and other women's health problems.</p><p>See ${svcLink('obstetrics-gynaecology', 'Obstetrics &amp; Gynaecology')} for what the department offers.</p>`, 'women'],
+  [`Is there a maternity hospital in ${SITE.town} for normal delivery and caesarean section?`, `<p>Yes. ${SITE.name} in ${esc(PRIMARY.addressLines[1])}, ${SITE.town} cares for mothers through pregnancy and childbirth: antenatal check-ups, ultrasound scans, electronic fetal monitoring, normal delivery, caesarean section when it is needed, and care for mother and baby afterwards.</p>${EMERGENCY.available24h ? `<p>The hospital is open 24 hours for emergencies in pregnancy. Call <a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>.</p>` : ''}`, 'women'],
+  [`Where can I get an ultrasound scan in ${SITE.town}?`, `<p>${SITE.name} does pregnancy, abdominal and pelvic scans, and follicular monitoring for couples trying to conceive. Your scan is read by the doctor treating you. See ${svcLink('ultrasound', 'Ultrasound Scanning')}.</p>`, 'care'],
+  ['Will the scan tell us whether the baby is a boy or a girl?', `<p>No. Telling the sex of an unborn baby is against the law in India under the PC &amp; PNDT Act, and it is not done at this hospital. Scans in pregnancy check the baby's growth, position and well-being.</p>`, 'women'],
+  [`Do you offer infertility treatment in ${SITE.town}?`, `<p>Yes. Both partners are evaluated together, then treatment can include medicines to help eggs grow and be released, with scans to follow each cycle. See ${svcLink('infertility', 'Infertility Treatment')}.</p>`, 'women'],
+  [`Is laparoscopic (keyhole) surgery available in ${SITE.town}?`, `<p>Yes. Keyhole operations are done through small cuts, for less pain, a shorter stay and a quicker return to normal life. Call reception to check whether the operation you need is done here. See ${svcLink('laparoscopic-surgery', 'Laparoscopic Surgery')}.</p>`, 'care'],
+  [`Who are the general physicians at ${SITE.name}?`, `<p>${docsIn('General Medicine')} treat diabetes, thyroid problems, blood pressure, fever and infections, breathing problems and kidney problems. See ${svcLink('general-medicine', 'General Medicine')}.</p>`, 'care'],
+  [`Is ${SITE.name} open 24 hours for emergencies?`, EMERGENCY.available24h ? `<p>Yes. The emergency department is open 24 hours, every day, including Sundays and holidays.${EMERGENCY.tel ? ` Call <a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>.` : ''}</p><p>For chest pain, sudden weakness of the face or arm, trouble breathing, a fit, heavy bleeding, or bleeding or severe pain in pregnancy, call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a> for an ambulance or come straight in.</p>` : `<p>${tbc('Casualty hours to be confirmed')}</p>`, 'visit'],
+  [`What are the OPD timings at ${SITE.name}?`, opd ? `<p>OPD runs ${opd}. OPD is closed on Sunday${EMERGENCY.available24h ? ', but the emergency department stays open' : ''}.</p>` : `<p>${tbc('OPD timings to be confirmed')}</p>`, 'visit'],
+  ['How do I book an appointment?', `<p>Call reception on <a href="tel:${PRIMARY.tel}">${PRIMARY.phone}</a>${PRIMARY.mobiles?.length ? ` or ${PRIMARY.mobiles.map(m => `<a href="tel:${m.tel}">${m.phone}</a>`).join(' or ')}` : ''}, or <a href="#contact">send a request</a> and we will email you once the hospital confirms a time.</p>`, 'visit'],
+  [`Where is ${SITE.name} in ${SITE.town}?`, `<p>${PRIMARY.addressLines.map(esc).join(', ')}, ${SITE.state}. ${PRIMARY.directions ? `<a href="${PRIMARY.directions}" target="_blank" rel="noopener">Get directions on Google Maps</a>.` : ''}</p>`, 'visit']
 ];
-export const accordion = (items, prefix) => `<div class="accordion">${items.map(([q, a], i) => `<div class="acc-item">
+const FAQ_TOPICS = [['all', 'All'], ['women', 'Pregnancy'], ['care', 'Treatment'], ['visit', 'Visiting']];
+
+// Shared with the department pages. On the home page each item carries its topic, and one answer is open at a time.
+export const accordion = (items, prefix, { single = false } = {}) => `<div class="accordion"${single ? ' data-single data-stagger' : ''}>${items.map(([q, a, topic], i) => `<div class="acc-item"${topic ? ` data-topic="${topic}"` : ''} style="--k:${i}">
   <h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="${prefix}-${i}" id="${prefix}-q${i}">${esc(q)}<span class="plus" aria-hidden="true"></span></button></h3>
   <div class="acc-panel" id="${prefix}-${i}" role="region" aria-labelledby="${prefix}-q${i}"><div class="acc-inner">${a}</div></div>
 </div>`).join('')}</div>`;
 
 const faq = () => `<section id="faq" class="section faq" aria-labelledby="faq-title">
   <div class="wrap faq-grid">
-    <div class="section-head">
-      <div class="reveal">
-        <p class="eyebrow">FAQ</p>
-        <h2 id="faq-title">Before you visit</h2>
+    <div class="faq-side">
+      <div class="section-head">
+        <div class="reveal">
+          <p class="eyebrow">FAQ</p>
+          <h2 id="faq-title">Questions about ${esc(SITE.name)}</h2>
+        </div>
+        <p class="intro reveal">Quick answers about our doctors, treatment and visiting the hospital in ${esc(SITE.town)}.</p>
       </div>
-      <p class="intro reveal">Answers marked "to be confirmed" are waiting on details from the hospital.</p>
+      <aside class="faq-help reveal" aria-labelledby="faq-help-title">
+        <span class="faq-help-mark">${icon('i-phone')}</span>
+        <h3 id="faq-help-title">Still have a question?</h3>
+        <p>Reception will answer it on the phone${PRIMARY.days ? `, ${PRIMARY.days}` : ''}.</p>
+        <div class="faq-help-actions">
+          <a class="btn btn-primary" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>Call ${PRIMARY.phone}</span></a>
+          <a class="btn btn-ghost" href="#contact"><span>Book an appointment</span></a>
+        </div>
+        ${EMERGENCY.available24h ? '<p class="faq-help-er">Emergency department open 24 hours</p>' : ''}
+      </aside>
     </div>
-    ${accordion(FAQ, 'faq')}
+    <div class="faq-main">
+      <div class="faq-topics reveal" role="group" aria-label="Show questions about">
+        ${FAQ_TOPICS.map(([t, label], i) => `<button class="faq-topic" type="button" data-topic="${t}" aria-pressed="${i === 0}">${label}<span class="faq-count">${t === 'all' ? FAQ.length : FAQ.filter(x => x[2] === t).length}</span></button>`).join('')}
+      </div>
+      ${accordion(FAQ, 'faq', { single: true })}
+      <p class="visually-hidden" role="status" aria-live="polite" data-faq-status></p>
+    </div>
   </div>
 </section>`;
 
 export const landing = () => `<!doctype html>
 <html lang="en" class="no-js">
 <head>
-${head({ title: `${SITE.name} | ${SITE.town}`, description: `${SERVICES.map(s => s.name).join(', ').replace(/, ([^,]*)$/, ' and $1')} at ${SITE.name}, ${SITE.town}.`, R, extraCss: ['home.css'] })}
+${head({
+  title: `${SITE.name}, ${SITE.town} | Gynaecologist, Maternity and General Physician`,
+  description: `Hospital in ${PRIMARY.addressLines[1]}, ${SITE.town} for pregnancy care and delivery, gynaecology, ultrasound, infertility, keyhole surgery and general medicine.${EMERGENCY.available24h ? ' 24-hour emergency.' : ''}`,
+  R, extraCss: ['home.css'], path: '', jsonLd: [hospitalLd(), faqLd(FAQ)]
+})}
 </head>
 <body class="home">
 ${sprite()}
@@ -449,6 +488,7 @@ ${header(R)}
 <main id="main">
 ${heroSlot()}
 ${services()}
+${why()}
 ${approach()}
 ${about()}
 ${doctors()}

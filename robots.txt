@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ratna-nursing-home.vercel.app/sitemap.xml
