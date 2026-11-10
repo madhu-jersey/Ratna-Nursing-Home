@@ -383,7 +383,7 @@ function takenSlots_(except) {
     const t = hhmm_(v[COL[approved ? 'Confirmed time' : 'Preferred time'] - 1]);
     const doctor = v[COL['Doctor'] - 1];
     if (!iso || !t || CONFIG.DOCTORS.indexOf(doctor) < 0) return;
-    const day = (out[iso] ||= {}), doc = (day[doctor] ||= {});
+    const day = out[iso] = out[iso] || {}, doc = day[doctor] = day[doctor] || {};
     doc[t] = (doc[t] || 0) + 1;
   });
   return out;
@@ -397,7 +397,7 @@ function slotsJson_() {
   Object.keys(all).filter(d => d >= today && d <= last).forEach(d => {
     Object.keys(all[d]).forEach(doctor => {
       const times = Object.keys(all[d][doctor]).filter(t => all[d][doctor][t] >= CONFIG.PATIENTS_PER_SLOT);
-      if (times.length) (full[d] ||= {})[doctor] = times;
+      if (times.length) { full[d] = full[d] || {}; full[d][doctor] = times; }
     });
   });
   return json_({ ok: true, today, last, full });
