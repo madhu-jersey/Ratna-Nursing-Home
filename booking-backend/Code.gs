@@ -2,17 +2,19 @@
  * Ratna Nursing Home: appointment requests.
  *
  * Lives inside a Google Sheet (Extensions > Apps Script) and is deployed as a web app.
- *  1. The website posts a request here. It is saved as a row in the "Appointments" sheet.
- *  2. The hospital gets an email with the details and a "Review and approve" button.
- *     The patient gets an email saying the request is received and waiting for confirmation.
- *  3. The hospital opens the button's page, sets the date and time, and approves (or declines).
- *     The sheet row is updated and the patient gets the approval email.
+ *  1. The website posts a request here. It is saved as a row in the "Appointments" sheet,
+ *     then the website hands the patient to a WhatsApp chat with reception (WHATSAPP_NUMBER).
+ *  2. The hospital gets an email with the details, a "Review and approve" button and a WhatsApp link to the patient.
+ *     If the patient gave an email, they get one saying the request is received and waiting for confirmation.
+ *  3. The hospital opens the button's page, sets the date, time and doctor, and approves (or declines).
+ *     The sheet row is updated, the appointment goes on that doctor's Google Calendar, and the page offers
+ *     a ready-written WhatsApp confirmation to the patient (plus an email, if they gave one).
  *
  * Setup steps are in booking-backend/SETUP.md.
  */
 
 // Shown when the web app URL is opened in a browser, so you can see which code is live
-const VERSION = 'Version 3: day and time required';
+const VERSION = 'Version 4: WhatsApp and doctors\' calendars';
 
 const CONFIG = {
   HOSPITAL_EMAIL: 'madhujersey9999@gmail.com', // TESTING ONLY: change to the hospital's own address before going live
@@ -24,6 +26,14 @@ const CONFIG = {
   SESSIONS: [['Morning', '10:00', '14:00'], ['Evening', '17:00', '20:00']],
   SLOT_MINUTES: 30,
   SHEET_NAME: 'Appointments',
+  // Reception's WhatsApp number, in international form without + (bookings arrive here from the website)
+  WHATSAPP_NUMBER: '918179898615',
+  // The doctors patients can choose. Keep in step with DOCTORS in build/data.mjs.
+  DOCTORS: ['Dr. Valluri Soma Sekhar', 'Dr. Valluri Subba Lakshmi', 'Dr. Valluri Amrutha Ratna', 'Dr. Bikkina Ghana Syam'],
+  // Optional: a Google Calendar ID for a doctor, to use a calendar that already exists.
+  // Left out, the script makes "<doctor> - Ratna appointments" in this account the first time it is needed;
+  // share each one with its doctor (see SETUP.md).
+  DOCTOR_CALENDARS: {},
   // Optional. Only needed when this script is NOT opened from the sheet (Extensions > Apps Script):
   // paste the sheet's ID, the long code in its address between /d/ and /edit. Left empty, a script made
   // from inside the sheet uses that sheet, and a standalone script makes its own 'Appointments' sheet.
@@ -40,8 +50,9 @@ const DEPARTMENTS = {
   'not-sure': 'Not sure yet'
 };
 
+// New columns go at the end, so rows saved by earlier versions keep their places
 const HEADERS = ['Request ID', 'Received', 'Status', 'Name', 'Phone', 'Email', 'Department', 'Preferred date', 'Preferred time', 'Message',
-  'Confirmed date', 'Confirmed time', 'Decided at', 'Source', 'Token'];
+  'Confirmed date', 'Confirmed time', 'Decided at', 'Source', 'Token', 'Doctor', 'Calendar event'];
 const COL = Object.fromEntries(HEADERS.map((h, i) => [h, i + 1]));
 
 /* ---------------- Website -> new request ---------------- */
@@ -55,6 +66,7 @@ function doPost(e) {
     phone: clean_(p.phone, 20),
     email: clean_(p.email, 120).toLowerCase(),
     department: DEPARTMENTS[p.service] || 'Not given',
+    doctor: CONFIG.DOCTORS.indexOf(p.doctor) > -1 ? p.doctor : '',
     date: /^\d{4}-\d{2}-\d{2}$/.test(p.date || '') ? p.date : '',
     time: slots_().indexOf(p.time) > -1 ? p.time : '',
     message: clean_(p.message, 1000),
@@ -63,7 +75,7 @@ function doPost(e) {
   const errors = [];
   if (req.name.length < 2) errors.push('name');
   if (!/^[+\d][\d\s-]{8,15}$/.test(req.phone)) errors.push('phone');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(req.email)) errors.push('email');
+  if (req.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(req.email)) errors.push('email');
   if (!req.date || isSunday_(req.date)) errors.push('date');
   if (!req.time) errors.push('time');
   if (errors.length) return json_({ ok: false, errors, version: VERSION });
@@ -75,13 +87,13 @@ function doPost(e) {
   lock.waitLock(15000);
   try {
     sheet_().appendRow([req.id, new Date(), 'Pending', safe_(req.name), "'" + req.phone, safe_(req.email), req.department,
-      "'" + (req.date ? prettyDate_(req.date) : 'Any day'), "'" + (req.time ? timeLabel_(req.time) : 'Any time'), safe_(req.message), '', '', '', req.source, req.token]);
+      "'" + (req.date ? prettyDate_(req.date) : 'Any day'), "'" + (req.time ? timeLabel_(req.time) : 'Any time'), safe_(req.message), '', '', '', req.source, req.token, req.doctor || 'No preference', '']);
   } finally {
     lock.releaseLock();
   }
 
   emailHospitalNewRequest_(req);
-  emailPatientReceived_(req);
+  if (req.email) emailPatientReceived_(req);
   return json_({ ok: true, id: req.id, version: VERSION });
 }
 
@@ -103,19 +115,38 @@ function doGet(e) {
     const sh = sheet_();
     const decided = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'd MMM yyyy, h:mm a');
     if (p.do === 'approve') {
-      const date = /^\d{4}-\d{2}-\d{2}$/.test(p.cdate || '') ? prettyDate_(p.cdate) : r.preferred;
+      const iso = /^\d{4}-\d{2}-\d{2}$/.test(p.cdate || '') ? p.cdate : isoDate_(r.preferred);
+      const date = iso ? prettyDate_(iso) : r.preferred;
       const time = clean_(p.ctime, 40);
+      const doctor = CONFIG.DOCTORS.indexOf(p.doctor) > -1 ? p.doctor : '';
+      let eventNote = 'No doctor chosen, so nothing was added to a calendar.';
+      if (doctor) {
+        try {
+          const ev = addToCalendar_(r, doctor, iso, time);
+          sh.getRange(row, COL['Calendar event']).setValue(ev ? 'Added to ' + doctor + "'s calendar" : 'Not added: date or time missing');
+          eventNote = ev ? `Added to ${esc_(doctor)}'s calendar.` : 'Not added to the calendar: the date or time was missing.';
+        } catch (err) {
+          sh.getRange(row, COL['Calendar event']).setValue('Calendar error: ' + err.message);
+          eventNote = 'Could not add it to the calendar: ' + esc_(err.message);
+        }
+      }
       sh.getRange(row, COL['Status']).setValue('Approved');
       sh.getRange(row, COL['Confirmed date']).setValue("'" + date);
       sh.getRange(row, COL['Confirmed time']).setValue(safe_(time));
       sh.getRange(row, COL['Decided at']).setValue(decided);
-      emailPatientApproved_(r, date, time);
-      return page_('Approved', `<p>Request <strong>${esc_(r.id)}</strong> is approved for <strong>${esc_(date)}${time ? ', ' + esc_(time) : ''}</strong>.</p><p>${esc_(r.name)} has been emailed at ${esc_(r.email)}, and the sheet is updated.</p>`);
+      sh.getRange(row, COL['Doctor']).setValue(doctor || 'Not assigned');
+      if (r.email) emailPatientApproved_(r, date, time, doctor);
+      const msg = `Hello ${r.name}, your appointment at ${CONFIG.HOSPITAL_NAME} is confirmed for ${date}${time ? ', ' + time : ''}${doctor ? ' with ' + doctor : ''}. Request ${r.id}.\nAddress: ${CONFIG.HOSPITAL_ADDRESS}.\nPlease bring any earlier reports and prescriptions. To change or cancel, reply here or call ${CONFIG.HOSPITAL_PHONE}.`;
+      return page_('Approved', `<p>Request <strong>${esc_(r.id)}</strong> is approved for <strong>${esc_(date)}${time ? ', ' + esc_(time) : ''}</strong>${doctor ? ' with ' + esc_(doctor) : ''}.</p>
+        <p>${eventNote} The sheet is updated${r.email ? ', and ' + esc_(r.name) + ' has been emailed' : ''}.</p>
+        ${waButton_(r.phone, msg, 'Send confirmation on WhatsApp')}`);
     }
     sh.getRange(row, COL['Status']).setValue('Declined');
     sh.getRange(row, COL['Decided at']).setValue(decided);
-    emailPatientDeclined_(r, clean_(p.reason, 300));
-    return page_('Declined', `<p>Request <strong>${esc_(r.id)}</strong> is declined. ${esc_(r.name)} has been emailed and asked to call reception.</p>`);
+    const reason = clean_(p.reason, 300);
+    if (r.email) emailPatientDeclined_(r, reason);
+    const msg = `Hello ${r.name}, we are not able to confirm your appointment request ${r.id} as sent.${reason ? ' ' + reason : ''} Please reply here or call ${CONFIG.HOSPITAL_PHONE} and we will find a time that works.`;
+    return page_('Declined', `<p>Request <strong>${esc_(r.id)}</strong> is declined${r.email ? ', and ' + esc_(r.name) + ' has been emailed' : ''}.</p>${waButton_(r.phone, msg, 'Tell the patient on WhatsApp')}`);
   }
 
   // Show the request with a form to set the date and time. Approving needs this click,
@@ -127,8 +158,9 @@ function doGet(e) {
       <dt>Request</dt><dd>${esc_(r.id)}</dd>
       <dt>Name</dt><dd>${esc_(r.name)}</dd>
       <dt>Phone</dt><dd><a href="tel:${esc_(r.phone)}">${esc_(r.phone)}</a></dd>
-      <dt>Email</dt><dd>${esc_(r.email)}</dd>
+      <dt>Email</dt><dd>${esc_(r.email) || '&ndash;'}</dd>
       <dt>Department</dt><dd>${esc_(r.department)}</dd>
+      <dt>Doctor asked for</dt><dd>${esc_(r.doctor || 'No preference')}</dd>
       <dt>Preferred date</dt><dd>${esc_(r.preferred)}</dd>
       <dt>Preferred time</dt><dd>${esc_(r.preferredTime)}</dd>
       <dt>Message</dt><dd>${esc_(r.message) || '&ndash;'}</dd>
@@ -136,8 +168,9 @@ function doGet(e) {
     <form method="get" action="${url}" target="_top">
       <input type="hidden" name="id" value="${esc_(r.id)}"><input type="hidden" name="t" value="${esc_(p.t)}">
       <label>Appointment date<input type="date" name="cdate" value="${iso}" required></label>
+      <label>Doctor (the appointment goes on their calendar)<select name="doctor"><option value="">Not assigned (no calendar entry)</option>${CONFIG.DOCTORS.map(d => `<option${d === r.doctor ? ' selected' : ''}>${esc_(d)}</option>`).join('')}</select></label>
       <label>Time<select name="ctime">${CONFIG.SESSIONS.map(sess => `<optgroup label="${sess[0]}">${slots_([sess]).map(t => `<option${timeLabel_(t) === r.preferredTime ? ' selected' : ''}>${timeLabel_(t)}</option>`).join('')}</optgroup>`).join('')}</select></label>
-      <button name="do" value="approve" class="ok">Approve and email the patient</button>
+      <button name="do" value="approve" class="ok">Approve and add to the calendar</button>
     </form>
     <form method="get" action="${url}" target="_top" class="decline">
       <input type="hidden" name="id" value="${esc_(r.id)}"><input type="hidden" name="t" value="${esc_(p.t)}">
@@ -153,14 +186,15 @@ function emailHospitalNewRequest_(r) {
   const ss = book_();
   MailApp.sendEmail({
     to: CONFIG.HOSPITAL_EMAIL,
-    replyTo: r.email,
+    ...(r.email ? { replyTo: r.email } : {}),
     name: CONFIG.HOSPITAL_NAME + ' website',
     subject: `New appointment request: ${r.name}, ${r.department} (${r.id})`,
     htmlBody: mail_('New appointment request', `
       <p>A new request came in from the website. It is waiting for your approval.</p>
-      ${table_([['Request', r.id], ['Name', r.name], ['Phone', r.phone], ['Email', r.email], ['Department', r.department],
+      ${table_([['Request', r.id], ['Name', r.name], ['Phone', r.phone], ['Email', r.email || '–'], ['Doctor', r.doctor || 'No preference'], ['Department', r.department],
         ['Preferred date', r.date ? prettyDate_(r.date) : 'Any day'], ['Preferred time', r.time ? timeLabel_(r.time) : 'Any time'], ['Message', r.message || '–']])}
       ${button_(link, 'Review and approve')}
+      <p style="font-size:14px">The patient is also sending this request to WhatsApp ${CONFIG.WHATSAPP_NUMBER.replace(/^91/, '')}. <a href="${waUrl_(r.phone, 'Hello ' + r.name + ', this is ' + CONFIG.HOSPITAL_NAME + ' about your appointment request ' + r.id + '.')}">Open a WhatsApp chat with the patient</a>.</p>
       <p style="font-size:13px;color:#4F5B74">All requests are in the <a href="${ss.getUrl()}">Appointments sheet</a>
       (<a href="https://docs.google.com/spreadsheets/d/${ss.getId()}/export?format=xlsx">download as Excel</a>).</p>`)
   });
@@ -181,7 +215,7 @@ function emailPatientReceived_(r) {
   });
 }
 
-function emailPatientApproved_(r, date, time) {
+function emailPatientApproved_(r, date, time, doctor) {
   MailApp.sendEmail({
     to: r.email,
     replyTo: CONFIG.HOSPITAL_EMAIL,
@@ -189,7 +223,7 @@ function emailPatientApproved_(r, date, time) {
     subject: `Appointment confirmed: ${date}${time ? ', ' + time : ''} (${r.id})`,
     htmlBody: mail_('Your appointment is confirmed', `
       <p>Dear ${esc_(r.name)}, your appointment at ${CONFIG.HOSPITAL_NAME} is confirmed.</p>
-      ${table_([['Date', date], ['Time', time || 'Please come during OPD hours'], ['Department', r.department], ['Request', r.id]])}
+      ${table_([['Date', date], ['Time', time || 'Please come during OPD hours'], ...(doctor ? [['Doctor', doctor]] : []), ['Department', r.department], ['Request', r.id]])}
       <p><strong>Where:</strong> ${CONFIG.HOSPITAL_ADDRESS}</p>
       <p>Please bring an ID proof and any earlier reports, scans and prescriptions. To change or cancel, call ${CONFIG.HOSPITAL_PHONE}.</p>
       ${emergencyNote_()}`)
@@ -209,6 +243,44 @@ function emailPatientDeclined_(r, reason) {
   });
 }
 
+/* ---------------- Doctors' calendars ---------------- */
+
+// The doctor's calendar: one named in DOCTOR_CALENDARS, or one this script made earlier, or a new one
+function doctorCalendar_(doctor) {
+  const props = PropertiesService.getScriptProperties();
+  const id = CONFIG.DOCTOR_CALENDARS[doctor] || props.getProperty('CAL ' + doctor);
+  const found = id && CalendarApp.getCalendarById(id);
+  if (found) return found;
+  const cal = CalendarApp.createCalendar(doctor + ' - Ratna appointments', { timeZone: CONFIG.TIMEZONE, color: CalendarApp.Color.BLUE });
+  props.setProperty('CAL ' + doctor, cal.getId());
+  return cal;
+}
+
+// One 30-minute event at the confirmed time; returns its ID, or '' when the date or time is missing
+function addToCalendar_(r, doctor, iso, timeLabel) {
+  const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(timeLabel || '');
+  if (!iso || !m) return '';
+  const h = (Number(m[1]) % 12) + (m[3].toLowerCase() === 'pm' ? 12 : 0);
+  const start = Utilities.parseDate(`${iso} ${String(h).padStart(2, '0')}:${m[2]}`, CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm');
+  const end = new Date(start.getTime() + CONFIG.SLOT_MINUTES * 60000);
+  const ev = doctorCalendar_(doctor).createEvent(`${r.name} (${r.department})`, start, end, {
+    location: CONFIG.HOSPITAL_ADDRESS,
+    description: `Request ${r.id}\nPhone: ${r.phone}${r.email ? '\nEmail: ' + r.email : ''}${r.message ? '\nNote: ' + r.message : ''}`
+  });
+  return ev.getId();
+}
+
+// WhatsApp needs the number with its country code: "98765 43210" or "098765 43210" -> "919876543210"
+function waUrl_(phone, text) {
+  let n = String(phone || '').replace(/\D/g, '');
+  if (n.length === 11 && n[0] === '0') n = n.slice(1);
+  if (n.length === 10) n = '91' + n;
+  return 'https://wa.me/' + n + '?text=' + encodeURIComponent(text);
+}
+function waButton_(phone, text, label) {
+  return `<p style="margin:20px 0 0"><a href="${waUrl_(phone, text)}" target="_blank" rel="noopener" style="display:block;text-align:center;padding:14px;border-radius:999px;background:#13804A;color:#FFFFFF;font-weight:600;text-decoration:none">${esc_(label)}</a></p>`;
+}
+
 /* ---------------- Helpers ---------------- */
 
 function sheet_() {
@@ -223,6 +295,9 @@ function sheet_() {
   } else if (sh.getRange(1, COL['Preferred time']).getValue() !== 'Preferred time') {
     sh.insertColumnAfter(COL['Preferred date']);
     sh.getRange(1, COL['Preferred time']).setValue('Preferred time');
+  }
+  if (sh.getRange(1, COL['Doctor']).getValue() !== 'Doctor') {
+    sh.getRange(1, COL['Doctor'], 1, 2).setValues([['Doctor', 'Calendar event']]).setFontWeight('bold').setBackground('#0B2A6F').setFontColor('#FFFFFF');
   }
   return sh;
 }
@@ -253,7 +328,7 @@ function findRequest_(id, token) {
         r: {
           id, status: v[COL['Status'] - 1], name: v[COL['Name'] - 1], phone: v[COL['Phone'] - 1], email: v[COL['Email'] - 1],
           department: v[COL['Department'] - 1], preferred: raw, preferredRaw: raw, preferredTime: v[COL['Preferred time'] - 1] || 'Any time', message: v[COL['Message'] - 1],
-          decidedAt: v[COL['Decided at'] - 1]
+          decidedAt: v[COL['Decided at'] - 1], doctor: (v[COL['Doctor'] - 1] || '').replace('No preference', '')
         }
       };
     }

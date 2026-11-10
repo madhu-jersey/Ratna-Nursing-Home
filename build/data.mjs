@@ -32,7 +32,7 @@ export const BRANCHES = [
     phone: '08819 222250',
     tel: '+918819222250',
     mobiles: [ // TODO(client): confirm whether either number is on WhatsApp
-      { phone: '81798 98615', tel: '+918179898615' },
+      { phone: '81798 98615', tel: '+918179898615', whatsapp: true },
       { phone: '83098 55655', tel: '+918309855655' }
     ],
     email: null,
@@ -45,6 +45,10 @@ export const BRANCHES = [
 ];
 
 export const PRIMARY = BRANCHES.find(b => b.primary) || BRANCHES[0];
+
+// Bookings go through this WhatsApp number: the form saves each request, then hands it to a WhatsApp chat here
+export const WHATSAPP = { number: '918179898615', display: '81798 98615' };
+export const waLink = text => `https://wa.me/${WHATSAPP.number}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
 
 // Appointment requests go to the Google Apps Script in booking-backend/ (see SETUP.md).
 // Paste the deployed web app URL here, then run npm run build. While it is null the form asks visitors to call.

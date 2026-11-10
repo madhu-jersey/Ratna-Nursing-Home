@@ -405,15 +405,30 @@
     const msg = form.elements.message, branch = form.elements.branch;
     if (branch && a.dataset.branch) branch.value = a.dataset.branch;
     if (form.elements.service && a.dataset.service) form.elements.service.value = a.dataset.service;
-    if (msg && !msg.value) msg.value = `I would like to book with ${a.dataset.bookDoctor}.`;
+    if (form.elements.doctor) form.elements.doctor.value = a.dataset.bookDoctor;
+    else if (msg && !msg.value) msg.value = `I would like to book with ${a.dataset.bookDoctor}.`;
   }));
 
-  /* ---------- Booking forms (the section and the popup): validate, then send to the hospital's booking service ---------- */
+  /* ---------- Booking forms (the section and the popup): validate, save to the hospital's booking service, then hand off to WhatsApp ---------- */
+  // The request as a WhatsApp message to reception, every detail already typed
+  const waText = (form, id) => {
+    const val = n => form.elements[n]?.value?.trim() || '';
+    const chosen = n => { const el = form.elements[n]; return el?.tagName === 'SELECT' && el.value ? el.selectedOptions[0].text : ''; };
+    const date = val('date');
+    const day = date ? new Date(date + 'T00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    const time = $('[name="time"]:checked', form)?.nextElementSibling?.textContent || chosen('time');
+    return 'Hello Ratna Nursing Home, I would like to book an appointment.\n\n' + [
+      `Name: ${val('name')}`, `Phone: ${val('phone')}`,
+      chosen('doctor') && `Doctor: ${chosen('doctor')}`, chosen('service') && `Department: ${chosen('service')}`,
+      day && `Day: ${day}`, time && `Time: ${time}`, val('message') && `Note: ${val('message')}`,
+      id && `Request ID: ${id}`].filter(Boolean).join('\n');
+  };
+  const waHref = (form, id) => `https://wa.me/${form.dataset.whatsapp}?text=${encodeURIComponent(waText(form, id))}`;
   const store = (kind, key, val) => { try { return val === undefined ? window[kind].getItem(key) : window[kind].setItem(key, val); } catch { return null; } };
   const checks = {
     name: v => v.trim().length >= 2 || 'Enter your name.',
     phone: v => /^[+\d][\d\s-]{8,15}$/.test(v.trim()) || 'Enter a 10-digit mobile number.',
-    email: v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Enter an email address, like name@gmail.com.',
+    email: v => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Check the email address, like name@gmail.com, or leave it empty.',
     branch: v => !!v || 'Choose a branch.',
     // Day and time are required and must fall within OPD: Monday to Saturday, and not already past
     date: v => !v ? 'Choose a day for your appointment.' : v < todayISO() ? 'Choose today or a later day.' : new Date(v + 'T00:00').getDay() === 0 ? 'OPD is closed on Sunday. Choose Monday to Saturday.' : true,
@@ -453,10 +468,16 @@
       if (e.target.name === 'time') validate('time');
     });
     form.addEventListener('reset', () => setTimeout(syncSlots));
-    const say = (text, kind, title) => {
+    const say = (text, kind, title, wa) => {
       statusEl.hidden = false; statusEl.textContent = '';
       if (title) { const t = document.createElement('strong'); t.className = 'status-title'; t.textContent = title; statusEl.append(t); }
       statusEl.append(text);
+      if (wa) {
+        const a = document.createElement('a');
+        a.className = 'btn wa-btn status-wa'; a.href = wa; a.target = '_blank'; a.rel = 'noopener';
+        a.innerHTML = '<svg aria-hidden="true" focusable="false"><use href="#i-whatsapp"/></svg><span>Send on WhatsApp</span>';
+        statusEl.append(a);
+      }
       statusEl.classList.toggle('is-ok', kind === 'ok'); statusEl.classList.toggle('is-error', kind === 'error');
       statusEl.focus();
     };
@@ -464,20 +485,25 @@
       e.preventDefault();
       const bad = fields.filter(n => !validate(n));
       if (bad.length) { first(bad[0]).focus(); return; }
-      const endpoint = form.dataset.endpoint;
-      if (!endpoint) { say(form.dataset.fallback, 'error'); return; }
+      const endpoint = form.dataset.endpoint, waNumber = form.dataset.whatsapp;
+      const display = waNumber ? waNumber.replace(/^91(\d{5})(\d{5})$/, '$1 $2') : '';
+      // Without the online service, WhatsApp alone still books
+      if (!endpoint) { say(`Send your request on WhatsApp to ${display} and reception will book you in.`, 'ok', 'Almost done', waHref(form)); return; }
       btn.disabled = true; btn.classList.add('is-busy'); if (label) label.textContent = 'Sending your request';
       try {
         const res = await fetch(endpoint, { method: 'POST', body: new URLSearchParams(new FormData(form)) });
         const data = await res.json();
         if (!data.ok) throw new Error((data.errors || []).join(', ') || 'rejected');
         const firstName = form.elements.name.value.trim().split(/\s+/)[0];
+        const wa = waNumber && waHref(form, data.id);
         form.reset();
         store('sessionStorage', 'rnh-booked', '1');
-        say('We will email you as soon as the hospital confirms your appointment.', 'ok', `Thank you, ${firstName}. Your request is sent.`);
+        say(wa ? `Your request is saved. Send it on WhatsApp to ${display} and reception will confirm your time in the chat.` : 'Reception will confirm your appointment soon.', 'ok', `Thank you, ${firstName}. One last step.`, wa);
         form.dispatchEvent(new CustomEvent('booking:sent', { bubbles: true }));
       } catch {
-        say(`Your request could not be sent. Please try again, or call reception on ${$('.book-call-main span')?.textContent || 'the hospital'}.`, 'error');
+        // The details are still in the form, so WhatsApp can carry the whole request
+        if (waNumber) say(`It could not be saved online just now. Send it on WhatsApp to ${display} instead, and reception will book you in.`, 'error', 'Send your request on WhatsApp', waHref(form));
+        else say(`Your request could not be sent. Please try again, or call reception on ${$('.book-call-main span')?.textContent || 'the hospital'}.`, 'error');
       } finally {
         btn.disabled = false; btn.classList.remove('is-busy'); if (label) label.textContent = 'Request appointment';
       }

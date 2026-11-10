@@ -1,4 +1,4 @@
-import { SITE, BRANCHES, PRIMARY, SERVICES, SERVICE_GROUPS, WHY, DOCTORS, FACILITIES, EMERGENCY, REVIEWS, BOOKING, SHOW_NOTES, timeLabel, sessionSlots } from './data.mjs';
+import { SITE, BRANCHES, PRIMARY, SERVICES, SERVICE_GROUPS, WHY, DOCTORS, FACILITIES, EMERGENCY, REVIEWS, BOOKING, SHOW_NOTES, WHATSAPP, waLink, timeLabel, sessionSlots } from './data.mjs';
 import { esc, tbc, note, icon, sprite, header, footer, head, callBar, serviceMark, dial, BEAT } from './partials.mjs';
 import { hospitalLd, faqLd } from './seo.mjs';
 
@@ -329,17 +329,18 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         <p class="eyebrow">Appointments</p>
         <h2 id="contact-title">Book an appointment</h2>
       </div>
-      <p class="intro reveal">Send a request and we will email you as soon as the hospital confirms your appointment.</p>
+      <p class="intro reveal">Choose a time, then send your request on WhatsApp to ${WHATSAPP.display}. Reception confirms it in the same chat.</p>
     </div>
     <div class="book-grid">
       <form id="appointment-form" class="book-form reveal" action="#" method="post" aria-describedby="form-note" ${bookingAttrs()}>
         <div class="form-grid">
           <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name"><span class="error" id="e-name" aria-live="polite"></span></div>
           <div class="field"><label for="f-phone">Phone number</label><input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="e-phone"><span class="error" id="e-phone" aria-live="polite"></span></div>
-          <div class="field"><label for="f-email">Email <span class="req">(for your confirmation)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
+          <div class="field"><label for="f-email">Email <span class="req">(optional)</span></label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" aria-describedby="e-email"><span class="error" id="e-email" aria-live="polite"></span></div>
           <div class="field date-field"><label for="f-date">Preferred day <span class="req">(Mon to Sat)</span></label><input id="f-date" name="date" type="date" required aria-describedby="e-date"><span class="error" id="e-date" aria-live="polite"></span></div>
           <div class="field"><label for="f-service">Department <span class="req">(optional)</span></label><select id="f-service" name="service"><option value="">Not sure yet</option>${SERVICES.map(s => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
-          <div class="field"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><input id="f-msg" name="message" placeholder="Fever for three days"></div>
+          <div class="field"><label for="f-doctor">Doctor <span class="req">(optional)</span></label><select id="f-doctor" name="doctor"><option value="">No preference</option>${DOCTORS.filter(d => d.name).map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join('')}</select></div>
+          <div class="field field-note"><label for="f-msg">Anything we should know? <span class="req">(optional)</span></label><input id="f-msg" name="message" placeholder="Fever for three days"></div>
           <fieldset class="field field-full slot-field" aria-describedby="e-time">
             <legend>Preferred time <span class="req">(${BOOKING.slotMinutes}-minute appointments)</span></legend>
             <div class="session-switch" role="group" aria-label="Session" hidden>${BOOKING.sessions.map((sess, i) => `<button class="session-btn" type="button" aria-pressed="${i === 0}" aria-controls="slots-${i}">${sess[0]}<span>${shortTime(sess[1])} to ${shortTime(sess[2])}</span></button>`).join('')}</div>
@@ -356,7 +357,7 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
         ${trapFields('page')}
         <div class="book-foot">
           <button class="btn btn-primary book-submit" type="submit"><span class="submit-label">Request appointment</span></button>
-          <p class="small book-note" id="form-note">This is a request. We will email you once the hospital confirms a time.</p>
+          <p class="small book-note" id="form-note">This is a request. Reception confirms your time on WhatsApp.</p>
         </div>
         <p class="book-alt">Prefer to call? <a href="tel:${PRIMARY.tel}">${PRIMARY.phone}</a>${EMERGENCY.available24h ? `. In an emergency, call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a> or come straight in, any time.` : '.'}</p>
         <div id="form-status" class="form-status" role="status" tabindex="-1" hidden></div>
@@ -364,9 +365,11 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
 
       <aside class="book-call reveal" aria-labelledby="book-call-title">
         <h3 id="book-call-title">Prefer to call?</h3>
-        <p>Reception will book you in over the phone.</p>
+        <p>Reception will book you in over the phone, or chat on WhatsApp.</p>
         ${PRIMARY.phone ? `<a class="book-call-main" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>${PRIMARY.phone}</span></a>` : ''}
-        ${PRIMARY.mobiles?.length ? `<div class="book-call-alts">${PRIMARY.mobiles.map(m => `<a class="book-call-alt" href="tel:${m.tel}">${m.phone}</a>`).join('')}</div>` : ''}
+        ${PRIMARY.mobiles?.length ? `<div class="book-call-alts">${PRIMARY.mobiles.map(m => m.whatsapp
+          ? `<a class="book-call-alt is-wa" href="${waLink('Hello Ratna Nursing Home, I would like to book an appointment.')}" target="_blank" rel="noopener">${icon('i-whatsapp')}<span>${m.phone}</span><span class="visually-hidden"> on WhatsApp</span></a>`
+          : `<a class="book-call-alt" href="tel:${m.tel}">${m.phone}</a>`).join('')}</div>` : ''}
         <dl class="book-times">
           ${BOOKING.sessions.map(([n, a, b]) => `<div><dt>${n}</dt><dd>${timeLabel(a)} to ${timeLabel(b)}</dd></div>`).join('')}
           ${PRIMARY.days ? '<div><dt>Sunday</dt><dd>OPD closed</dd></div>' : ''}
@@ -378,7 +381,7 @@ const contact = () => `<section id="contact" class="section book" aria-labelledb
 </section>`;
 
 /* Shared by both booking forms: where requests go, and the fields people never see */
-const bookingAttrs = () => `data-booking${BOOKING.endpoint ? ` data-endpoint="${esc(BOOKING.endpoint)}"` : ''} data-fallback="${esc(`Online booking is not connected yet, so this request has not been sent. To book now, call reception on ${PRIMARY.phone}.`)}"`;
+const bookingAttrs = () => `data-booking data-whatsapp="${WHATSAPP.number}"${BOOKING.endpoint ? ` data-endpoint="${esc(BOOKING.endpoint)}"` : ''}`;
 const trapFields = source => `<input type="hidden" name="source" value="${source}"><div class="trap" aria-hidden="true"><label>Company<input name="company" tabindex="-1" autocomplete="off"></label></div>`;
 
 /* ---------- Booking popup: rises in once per visit, after a short while on the page ---------- */
@@ -391,13 +394,13 @@ const bookingPopup = () => `<div id="book-pop" class="book-pop" role="dialog" ar
       <span class="pop-seal">${dial('pop-dial', 48)}<img src="${R}assets/img/logo-240.png" alt="" width="240" height="134" loading="lazy" decoding="async"></span>
       <div>
         <h2 id="pop-title">Book an appointment</h2>
-        <p>Leave your details. We will email you once the hospital confirms a time.</p>
+        <p>Leave your details, then send them to us on WhatsApp.</p>
       </div>
     </div>
     <form class="pop-form" action="#" method="post" ${bookingAttrs()}>
       <div class="field"><label for="p-name">Your name</label><input id="p-name" name="name" autocomplete="name" required aria-describedby="pe-name"><span class="error" id="pe-name" aria-live="polite"></span></div>
       <div class="field"><label for="p-phone">Phone number</label><input id="p-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="pe-phone"><span class="error" id="pe-phone" aria-live="polite"></span></div>
-      <div class="field"><label for="p-email">Email</label><input id="p-email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="pe-email"><span class="error" id="pe-email" aria-live="polite"></span></div>
+      <div class="field"><label for="p-email">Email <span class="req">(optional)</span></label><input id="p-email" name="email" type="email" inputmode="email" autocomplete="email" aria-describedby="pe-email"><span class="error" id="pe-email" aria-live="polite"></span></div>
       <div class="pop-pair">
         <div class="field date-field"><label for="p-date">Day</label><input id="p-date" name="date" type="date" required aria-describedby="pe-date"><span class="error" id="pe-date" aria-live="polite"></span></div>
         <div class="field"><label for="p-time">Time</label>
@@ -429,7 +432,7 @@ const FAQ = [
   [`Who are the general physicians at ${SITE.name}?`, `<p>${docsIn('General Medicine')} treat diabetes, thyroid problems, blood pressure, fever and infections, breathing problems and kidney problems. See ${svcLink('general-medicine', 'General Medicine')}.</p>`, 'care'],
   [`Is ${SITE.name} open 24 hours for emergencies?`, EMERGENCY.available24h ? `<p>Yes. The emergency department is open 24 hours, every day, including Sundays and holidays.${EMERGENCY.tel ? ` Call <a href="tel:${EMERGENCY.tel}">${EMERGENCY.phone}</a>.` : ''}</p><p>For chest pain, sudden weakness of the face or arm, trouble breathing, a fit, heavy bleeding, or bleeding or severe pain in pregnancy, call <a href="tel:${EMERGENCY.national}">${EMERGENCY.national}</a> for an ambulance or come straight in.</p>` : `<p>${tbc('Casualty hours to be confirmed')}</p>`, 'visit'],
   [`What are the OPD timings at ${SITE.name}?`, opd ? `<p>OPD runs ${opd}. OPD is closed on Sunday${EMERGENCY.available24h ? ', but the emergency department stays open' : ''}.</p>` : `<p>${tbc('OPD timings to be confirmed')}</p>`, 'visit'],
-  ['How do I book an appointment?', `<p>Call reception on <a href="tel:${PRIMARY.tel}">${PRIMARY.phone}</a>${PRIMARY.mobiles?.length ? ` or ${PRIMARY.mobiles.map(m => `<a href="tel:${m.tel}">${m.phone}</a>`).join(' or ')}` : ''}, or <a href="#contact">send a request</a> and we will email you once the hospital confirms a time.</p>`, 'visit'],
+  ['How do I book an appointment?', `<p>Choose a day and time in the <a href="#contact">booking form</a>, then send it on WhatsApp to <a href="${waLink()}" target="_blank" rel="noopener">${WHATSAPP.display}</a>. Reception confirms your appointment in the same chat. You can also message that number directly, or call reception on <a href="tel:${PRIMARY.tel}">${PRIMARY.phone}</a>.</p>`, 'visit'],
   [`Where is ${SITE.name} in ${SITE.town}?`, `<p>${PRIMARY.addressLines.map(esc).join(', ')}, ${SITE.state}. ${PRIMARY.directions ? `<a href="${PRIMARY.directions}" target="_blank" rel="noopener">Get directions on Google Maps</a>.` : ''}</p>`, 'visit']
 ];
 const FAQ_TOPICS = [['all', 'All'], ['women', 'Pregnancy'], ['care', 'Treatment'], ['visit', 'Visiting']];

@@ -663,3 +663,9 @@ html.lenis, html.lenis body { height: auto; }
   .cta-band { margin-bottom: 24px; }
   .svc-other { margin-top: 28px; }
 }
+
+/* ---------- WhatsApp: the green button, in the phone bar and after a booking request ---------- */
+.wa-btn { --sweep: #0E6A3A; background: #13804A; color: var(--white); }
+.wa-btn svg { width: 20px; height: 20px; }
+@media (max-width: 899px) { .call-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .call-bar .btn { padding-inline: 12px; } }
+.status-wa { display: inline-flex; width: 100%; min-height: 52px; margin-top: 14px; }

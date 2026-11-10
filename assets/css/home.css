@@ -333,7 +333,8 @@ a.strip-value:hover { color: var(--red); }
   .book-call .book-emergency { margin-top: auto; }
 }
 @media (min-width: 1100px) {
-  .book .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .book .form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } /* two rows of fields: details, then choices and the note */
+  .book .field-note { grid-column: span 2; }
   .book .slot-row { grid-template-columns: repeat(8, minmax(0, 1fr)); } /* one full row per session, columns lined up */
 }
 .book-form { --text: var(--ink); --muted: var(--slate); --focus: var(--red); padding: clamp(20px, 2.2vw, 26px); border-radius: calc(var(--r-xl) + 4px); background: var(--paper); }
@@ -683,3 +684,9 @@ a.strip-value:hover { color: var(--red); }
   .book-alt a { color: var(--ink); font-weight: 600; }
   .book-note { font-size: var(--fs-micro); }
 }
+/* The WhatsApp number in the call box opens a chat */
+.book-call-alt.is-wa { gap: 8px; border-color: rgba(37, 211, 102, .45); }
+.book-call-alt.is-wa svg { width: 18px; height: 18px; color: #4ADE80; }
+
+/* Between phone and wide layouts the note takes a full row */
+@media (min-width: 640px) and (max-width: 1099px) { .book .field-note { grid-column: 1 / -1; } }

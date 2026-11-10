@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { SITE, BRANCHES, PRIMARY, SERVICES, LEGAL, EMERGENCY, SHOW_NOTES } from './data.mjs';
+import { SITE, BRANCHES, PRIMARY, SERVICES, LEGAL, EMERGENCY, SHOW_NOTES, WHATSAPP, waLink } from './data.mjs';
 
 export const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 export const tbc = (text = 'To be confirmed with client', cls = '') => `<span class="tbc ${cls}">${esc(text)}</span>`;
@@ -26,6 +26,7 @@ ${sym('i-menu', '<path d="M4 8h16M4 16h16"/>')}
 ${sym('i-pause', '<path d="M9 6v12M15 6v12"/>')}
 ${sym('i-play', '<path d="M8 5.5v13l10-6.5z"/>')}
 ${sym('i-image', '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/>')}
+${sym('i-whatsapp', '<path d="M4.6 19.4l1.1-3.4a8 8 0 1 1 2.8 2.6z"/><path d="M9.3 8.6c.3-.4.7-.5 1-.4l.9 2-.6.8a5.6 5.6 0 0 0 2.4 2.4l.8-.6 2 .9c.1.3 0 .7-.4 1-.8.4-2 .3-3.4-.6a9.2 9.2 0 0 1-3-3c-.9-1.4-1-2.6-.7-3.5z"/>')}
 ${sym('i-check', '<path d="m5.5 12.5 4 4L18.5 7.5"/>')}
 ${sym('i-ambulance', '<path d="M3 16.5v-8a1 1 0 0 1 1-1h10v9.5"/><path d="M14 10.5h3.6l2.9 3.4v3.1h-1.6"/><path d="M8 17h5.5"/><circle cx="6" cy="17.2" r="1.8"/><circle cx="16.5" cy="17.2" r="1.8"/><path d="M8.5 9.6v4M6.5 11.6h4"/>')}
 ${sym('i-users', '<circle cx="9" cy="8" r="3"/><path d="M3.5 19.5c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="16.8" cy="9" r="2.4"/><path d="M15.8 14.3c2.5-.3 4.3 1.3 4.9 4.2"/>')}
@@ -177,7 +178,7 @@ export const contactCard = b => `<article class="contact-card${b.confirmed ? '' 
   ${b.directions ? `<a class="link" href="${b.directions}" target="_blank" rel="noopener">Open in Google Maps<span class="visually-hidden"> (${esc(b.name)})</span></a>` : pending('Map link')}
 </article>`;
 
-export const callBar = () => `<div class="call-bar"><a class="btn btn-primary" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>Call now: ${PRIMARY.phone}</span></a></div>`;
+export const callBar = () => `<div class="call-bar"><a class="btn btn-primary" href="tel:${PRIMARY.tel}">${icon('i-phone')}<span>Call now</span></a><a class="btn wa-btn" href="${waLink('Hello Ratna Nursing Home, I would like to book an appointment.')}" target="_blank" rel="noopener">${icon('i-whatsapp')}<span>WhatsApp</span><span class="visually-hidden"> ${WHATSAPP.display} (opens WhatsApp)</span></a></div>`;
 
 /* PC-PNDT statement: shown in the footer and on pregnancy, scan and fertility pages */
 export const pcpndtNote = () => `<p class="legal-note"><strong>PC-PNDT Act.</strong> ${esc(LEGAL.pcpndt)}${LEGAL.pcpndtConfirmed ? '' : ` ${note('Match the wording on the hospital notice board', 'tbc-inline')}`}</p>`;
