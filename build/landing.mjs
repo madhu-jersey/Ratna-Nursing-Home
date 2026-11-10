@@ -190,7 +190,7 @@ const doctors = () => `<section id="doctors" class="section doctors" aria-labell
       </div>
       <p class="intro reveal">General physicians and gynaecologists in ${esc(SITE.town)}. Choose a doctor and we will add their name to your appointment request.</p>
     </div>
-    <div class="doc-list" data-swipe role="group" aria-label="Doctors">${DOCTORS.filter(d => d.name).map(doctorCard).join('')}</div>
+    <div class="doc-list">${DOCTORS.filter(d => d.name).map(doctorCard).join('')}</div>
   </div>
 </section>`;
 
@@ -241,14 +241,14 @@ const GALLERY = [
   ['Fetal monitoring', 'facilities', 'g-sq'], ['Pharmacy', 'facilities', 'g-wide'], ['Patient room', 'wards', 'g-wide']
 ];
 const GALLERY_TABS = [['all', 'All'], ['hospital', 'Hospital'], ['wards', 'Wards'], ['facilities', 'Facilities'], ['team', 'Team']];
-const gallery = () => `<section id="gallery" class="section gallery" aria-labelledby="gallery-title">
+const gallery = () => `<section id="gallery" class="section gallery is-collapsed" aria-labelledby="gallery-title">
   <div class="wrap">
     <div class="section-head">
       <div class="reveal">
         <p class="eyebrow">Gallery</p>
-        <h2 id="gallery-title">Inside the hospital</h2>
+        <h2 id="gallery-title" class="logo-title">Inside <img class="title-logo" src="${R}assets/img/logo-240.png" alt="${esc(SITE.name)}" width="240" height="134" loading="lazy" decoding="async"></h2>
       </div>
-      <p class="intro reveal">Photos of the hospital will appear here. Each frame is labelled with the shot we need.</p>
+      <p class="intro reveal">A look at our hospital. Each frame is labelled with the photo it will hold.</p>
     </div>
     <div class="tabs reveal" role="tablist" aria-label="Filter photos">
       ${GALLERY_TABS.map(([f, l], i) =>
@@ -265,6 +265,7 @@ const gallery = () => `<section id="gallery" class="section gallery" aria-labell
         </button>
       </li>`).join('')}
     </ul>
+    <button class="btn btn-ghost gallery-more" type="button" aria-controls="gallery-grid" aria-expanded="false"><span>View more photos</span>${icon('i-arrow')}</button>
   </div>
   <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
     <button class="lb-btn lb-close" type="button" aria-label="Close photo viewer">${icon('i-close')}</button>

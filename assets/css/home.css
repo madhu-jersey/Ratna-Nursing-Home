@@ -594,18 +594,18 @@ a.strip-value:hover { color: var(--red); }
   .why-icon { grid-row: span 2; width: 44px; height: 44px; border-radius: 12px; margin: 0; }
   .why-icon svg { width: 22px; height: 22px; }
   .why-card h3 { font-size: 1.15rem; margin: 2px 0 4px; }
-  .doc-list { gap: 14px; }
-  .doc-card { grid-template-columns: 76px minmax(0, 1fr); column-gap: 16px; row-gap: 0; align-items: start; padding: 18px; border-radius: 22px; }
-  .doc-info { display: contents; }
-  .doc-photo { grid-row: 1 / span 3; width: 76px; border-radius: 50%; box-shadow: none; background: var(--paper); }
-  .doc-photo .dial, .doc-photo-note { display: none; }
-  .doc-face { width: 100%; box-shadow: 0 0 0 1px var(--line); }
-  .doc-initials { font-size: 1.5rem; }
-  .doc-dept { grid-column: 2; margin: 4px 0 2px; font-size: var(--fs-micro); }
-  .doc-name { grid-column: 2; font-size: 1.3rem; margin-bottom: 4px; }
-  .doc-qual { grid-column: 2; font-size: .875rem; }
-  .doc-bio, .doc-areas-title, .doc-areas, .doc-times-title, .doc-times, .doc-book { grid-column: 1 / -1; }
-  .doc-book { width: 100%; }
+  .doc-list { gap: 16px; }
+  .doc-card { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 14px 14px 20px; border-radius: 24px; }
+  .doc-photo { max-width: none; aspect-ratio: 4 / 3; margin-bottom: 20px; border-radius: 18px; }
+  .doc-photo .dial { inset: 7% auto auto 50%; width: auto; height: 78%; aspect-ratio: 1; translate: -50% 0; }
+  .doc-face { width: 36%; margin-top: -6%; }
+  .doc-photo-note { bottom: 8px; }
+  .doc-info { padding: 0 6px; }
+  .doc-dept { margin-bottom: 4px; }
+  .doc-name { font-size: 1.6rem; }
+  .doc-areas-title { margin-top: 16px; }
+  .doc-times { margin-bottom: 20px; }
+  .doc-book { width: 100%; min-height: 54px; }
 
   /* FAQ: heading, swipeable topics, the questions, then the help card */
   .faq .faq-grid { gap: 0; }
@@ -631,13 +631,15 @@ a.strip-value:hover { color: var(--red); }
   .visit-actions .btn { width: 100%; }
   .visit-map { min-height: 240px; border-radius: 18px; }
 
-  /* Gallery: one swipeable row */
-  .tabs { display: flex; flex-wrap: nowrap; width: 100%; margin-bottom: 20px; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { flex: 1 1 auto; padding: 0 8px; }
-  .bento { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding: 4px var(--gutter) 12px; scroll-padding-inline: var(--gutter); }
-  .bento::-webkit-scrollbar { display: none; }
-  .bento > li { flex: none; width: 72vw; max-width: 300px; height: 240px; scroll-snap-align: start; }
+  /* Gallery: one large frame, then two columns; the filters wait for wider screens */
+  .gallery .tabs { display: none; }
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 132px; gap: 12px; grid-auto-flow: row dense; }
+  .bento > li, .bento .g-wide, .bento .g-tall { grid-column: auto; grid-row: span 1; }
+  .bento > li:nth-child(1) { grid-column: 1 / -1; grid-row: span 2; }
+  .bento > li:nth-child(3), .bento > li:nth-child(7) { grid-row: span 2; }
+  .gallery.is-collapsed .bento > li:nth-child(n+5) { display: none; }
+  .gallery .gallery-more { display: flex; width: 100%; min-height: 54px; margin-top: 18px; }
+  .bento > li:not(:first-child) .ph-label .small { display: none; }
 
   /* Reviews: rating beside a smaller dial */
   .reviews-grid { gap: 28px; }
@@ -677,3 +679,13 @@ a.strip-value:hover { color: var(--red); }
 
 /* Dots only exist on phones, where the rows swipe */
 @media (min-width: 760px) { .swipe-dots { display: none; } }
+
+/* Logo in a section heading, standing in for the hospital's name */
+.logo-title { display: flex; flex-wrap: wrap; align-items: center; gap: .05em .3em; max-width: none; }
+.title-logo { height: 1.2em; width: auto; }
+/* "View more photos" is only needed where the gallery starts collapsed (phones) */
+.gallery-more { display: none; }
+.gallery-more svg { width: 18px; height: 18px; transition: rotate .5s var(--ease-out); }
+.gallery-more[aria-expanded="true"] svg { rotate: -90deg; }
+/* Photos opened by "View more photos" rise in one after another */
+.bento > li.is-entering { animation: faqIn .5s var(--ease-out) both; animation-delay: calc(var(--k, 0) * 60ms); }

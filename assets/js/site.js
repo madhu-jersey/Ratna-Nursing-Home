@@ -263,6 +263,16 @@
     mark();
   });
 
+  /* ---------- Gallery (phones): open and close the rest of the photos ---------- */
+  const galleryMore = $('.gallery-more');
+  if (galleryMore) galleryMore.addEventListener('click', () => {
+    const gallery = galleryMore.closest('.gallery'), open = gallery.classList.toggle('is-collapsed') === false;
+    galleryMore.setAttribute('aria-expanded', String(open));
+    $('span', galleryMore).textContent = open ? 'Show fewer photos' : 'View more photos';
+    if (open) $$('.bento > li:nth-child(n+5)', gallery).forEach((li, i) => { li.classList.remove('is-entering'); void li.offsetWidth; li.style.setProperty('--k', i); li.classList.add('is-entering'); });
+    else gallery.scrollIntoView({ block: 'start', behavior: motionOK() ? 'smooth' : 'auto' });
+  });
+
   /* ---------- Gallery: tabs ---------- */
   const tabs = $$('.gallery .tab');
   const items = $$('#gallery-grid > li');

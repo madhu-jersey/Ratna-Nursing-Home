@@ -29,10 +29,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap">
-<link rel="stylesheet" href="assets/css/site.css?v=4fac6613df">
-<link rel="stylesheet" href="assets/css/home.css?v=4fac6613df">
+<link rel="stylesheet" href="assets/css/site.css?v=858e082289">
+<link rel="stylesheet" href="assets/css/home.css?v=858e082289">
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-<script src="assets/js/site.js?v=4fac6613df" defer></script>
+<script src="assets/js/site.js?v=858e082289" defer></script>
 </head>
 <body class="home">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -311,7 +311,7 @@
       </div>
       <p class="intro reveal">General physicians and gynaecologists in Tanuku. Choose a doctor and we will add their name to your appointment request.</p>
     </div>
-    <div class="doc-list" data-swipe role="group" aria-label="Doctors"><article class="doc-card reveal">
+    <div class="doc-list"><article class="doc-card reveal">
     <div class="doc-photo">
       <svg class="dial doc-dial" viewBox="0 0 200 200" fill="none" aria-hidden="true">
   <circle class="dial-ring" cx="100" cy="100" r="98"/>
@@ -426,14 +426,14 @@
 </div></div>
   </div>
 </section>
-<section id="gallery" class="section gallery" aria-labelledby="gallery-title">
+<section id="gallery" class="section gallery is-collapsed" aria-labelledby="gallery-title">
   <div class="wrap">
     <div class="section-head">
       <div class="reveal">
         <p class="eyebrow">Gallery</p>
-        <h2 id="gallery-title">Inside the hospital</h2>
+        <h2 id="gallery-title" class="logo-title">Inside <img class="title-logo" src="assets/img/logo-240.png" alt="Ratna Nursing Home" width="240" height="134" loading="lazy" decoding="async"></h2>
       </div>
-      <p class="intro reveal">Photos of the hospital will appear here. Each frame is labelled with the shot we need.</p>
+      <p class="intro reveal">A look at our hospital. Each frame is labelled with the photo it will hold.</p>
     </div>
     <div class="tabs reveal" role="tablist" aria-label="Filter photos">
       <button class="tab" type="button" role="tab" data-filter="all" aria-selected="true" aria-controls="gallery-grid">All</button><button class="tab" type="button" role="tab" data-filter="hospital" aria-selected="false" aria-controls="gallery-grid" tabindex="-1">Hospital</button><button class="tab" type="button" role="tab" data-filter="wards" aria-selected="false" aria-controls="gallery-grid" tabindex="-1">Wards</button><button class="tab" type="button" role="tab" data-filter="facilities" aria-selected="false" aria-controls="gallery-grid" tabindex="-1">Facilities</button><button class="tab" type="button" role="tab" data-filter="team" aria-selected="false" aria-controls="gallery-grid" tabindex="-1">Team</button>
@@ -505,6 +505,7 @@
         </button>
       </li>
     </ul>
+    <button class="btn btn-ghost gallery-more" type="button" aria-controls="gallery-grid" aria-expanded="false"><span>View more photos</span><svg class="" aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></button>
   </div>
   <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
     <button class="lb-btn lb-close" type="button" aria-label="Close photo viewer"><svg class="" aria-hidden="true" focusable="false"><use href="#i-close"/></svg></button>
