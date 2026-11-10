@@ -15,7 +15,7 @@
  */
 
 // Shown when the web app URL is opened in a browser, so you can see which code is live
-const VERSION = 'Version 6: reception page, no link for patients';
+const VERSION = 'Version 7: reception app screens';
 
 const CONFIG = {
   HOSPITAL_NAME: 'Ratna Nursing Home',
@@ -92,23 +92,24 @@ function doPost(e) {
   return json_({ ok: true, id: req.id, version: VERSION });
 }
 
-/* ---------------- Reception's approval page (opened from the link in the WhatsApp message) ---------------- */
+/* ---------------- Reception screens (opened from the Bookings icon on the reception phone) ---------------- */
 
 function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.view === 'reception') return pinGate_(p) || pendingPage_(p.pin);
-  if (!p.id) return page_('Booking service', `<p>The Ratna Nursing Home booking service is running.</p><p><strong>${VERSION}</strong></p>`);
+  if (!p.id) return page_({ title: 'Booking service', body: `<section class="card"><p>The ${CONFIG.HOSPITAL_NAME} booking service is running.</p><p class="muted">${VERSION}</p></section>` });
 
-  // Every request page is reception's: the PIN comes first
+  // Every booking screen is reception's: the PIN comes first
   const gate = pinGate_(p);
   if (gate) return gate;
 
   const found = findRequest_(p.id, p.t);
-  if (!found) return page_('Request not found', `<p>This request is not in the Appointments sheet.</p>${backLink_(p.pin)}`);
+  if (!found) return page_({ title: 'Booking', back: p.pin, body: result_('cross', 'Booking not found', 'It is not in the Appointments sheet.') + listButton_(p.pin) });
   const { row, r } = found;
 
   if (r.status !== 'Pending') {
-    return page_(`Already ${r.status.toLowerCase()}`, `<p>Request <strong>${esc_(r.id)}</strong> for ${esc_(r.name)} was ${esc_(r.status.toLowerCase())}${r.decidedAt ? ' on ' + esc_(r.decidedAt) : ''}.</p>${backLink_(p.pin)}`);
+    return page_({ title: 'Booking', back: p.pin, body: result_(r.status === 'Approved' ? 'tick' : 'cross', `Already ${r.status.toLowerCase()}`,
+      `${esc_(r.name)}'s booking was ${esc_(r.status.toLowerCase())}${r.decidedAt ? ' on ' + esc_(r.decidedAt) : ''}.`) + listButton_(p.pin) });
   }
 
   if (p.do === 'approve' || p.do === 'decline') {
@@ -119,7 +120,7 @@ function doGet(e) {
       const date = iso ? prettyDate_(iso) : r.preferred;
       const time = clean_(p.ctime, 40);
       const doctor = CONFIG.DOCTORS.indexOf(p.doctor) > -1 ? p.doctor : '';
-      let eventNote = 'No doctor chosen, so nothing was added to a calendar.';
+      let eventNote = 'No doctor chosen, so it is not on a calendar.';
       if (doctor) {
         try {
           const ev = addToCalendar_(r, doctor, iso, time);
@@ -136,60 +137,80 @@ function doGet(e) {
       sh.getRange(row, COL['Decided at']).setValue(decided);
       sh.getRange(row, COL['Doctor']).setValue(doctor || 'Not assigned');
       const msg = `Hello ${r.name}, your appointment at ${CONFIG.HOSPITAL_NAME} is confirmed for ${date}${time ? ', ' + time : ''}${doctor ? ' with ' + doctor : ''}.\nAddress: ${CONFIG.HOSPITAL_ADDRESS}.\nPlease bring any earlier reports and prescriptions. To change or cancel, reply here or call ${CONFIG.HOSPITAL_PHONE}.`;
-      return page_('Approved', `<p>Request <strong>${esc_(r.id)}</strong> is approved for <strong>${esc_(date)}${time ? ', ' + esc_(time) : ''}</strong>${doctor ? ' with ' + esc_(doctor) : ''}.</p>
-        <p>${eventNote} The sheet is updated.</p>
-        ${waButton_(r.phone, msg, 'Send confirmation on WhatsApp')}${backLink_(p.pin)}`);
+      return page_({ title: 'Approved', back: p.pin, body:
+        result_('tick', 'Approved', `<strong>${esc_(r.name)}</strong><br>${esc_(dayLabel_(date))}${time ? ', ' + esc_(time) : ''}${doctor ? '<br>' + esc_(doctor) : ''}`) +
+        `<p class="note">${eventNote}</p>` +
+        `<a class="btn wa" href="${waUrl_(r.phone, msg)}" target="_blank" rel="noopener">${ICON.wa}Send confirmation on WhatsApp</a>` +
+        listButton_(p.pin) });
     }
     sh.getRange(row, COL['Status']).setValue('Declined');
     sh.getRange(row, COL['Decided at']).setValue(decided);
     const reason = clean_(p.reason, 300);
     const msg = `Hello ${r.name}, we are not able to confirm your appointment request as sent.${reason ? ' ' + reason : ''} Please reply here or call ${CONFIG.HOSPITAL_PHONE} and we will find a time that works.`;
-    return page_('Declined', `<p>Request <strong>${esc_(r.id)}</strong> is declined.</p>${waButton_(r.phone, msg, 'Tell the patient on WhatsApp')}${backLink_(p.pin)}`);
+    return page_({ title: 'Declined', back: p.pin, body:
+      result_('cross', 'Declined', `<strong>${esc_(r.name)}</strong>'s booking is declined.`) +
+      `<a class="btn wa" href="${waUrl_(r.phone, msg)}" target="_blank" rel="noopener">${ICON.wa}Tell the patient on WhatsApp</a>` +
+      listButton_(p.pin) });
   }
 
-  // Show the request with the choices to approve. Approving needs this click,
+  // The booking, with the choices to approve. Approving needs this tap,
   // so a link preview that opens the link cannot approve anything by itself.
   const url = ScriptApp.getService().getUrl();
   const iso = isoDate_(r.preferred);
   const hidden = `<input type="hidden" name="id" value="${esc_(r.id)}"><input type="hidden" name="t" value="${esc_(p.t)}"><input type="hidden" name="pin" value="${esc_(p.pin)}">`;
-  return page_('Review appointment request', `
-    ${backLink_(p.pin, true)}
-    <dl>
-      <dt>Request</dt><dd>${esc_(r.id)}</dd>
-      <dt>Name</dt><dd>${esc_(r.name)}</dd>
-      <dt>Phone</dt><dd><a href="tel:${esc_(r.phone)}">${esc_(r.phone)}</a></dd>
-      <dt>Doctor asked for</dt><dd>${esc_(r.doctor || 'No preference')}</dd>
-      <dt>Department</dt><dd>${esc_(r.department)}</dd>
-      <dt>Preferred day</dt><dd>${esc_(r.preferred)}</dd>
-      <dt>Preferred time</dt><dd>${esc_(r.preferredTime)}</dd>
-      <dt>Note</dt><dd>${esc_(r.message) || '&ndash;'}</dd>
-    </dl>
-    <form method="get" action="${url}" target="_top">
+  const row_ = (k, v, wide) => `<div${wide ? ' class="wide"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`;
+  return page_({ title: 'New booking', back: p.pin, body: `
+    <section class="card">
+      <h2 class="pname">${esc_(r.name)}</h2>
+      <p class="when">${esc_(dayLabel_(r.preferred))}, ${esc_(r.preferredTime)}</p>
+      <div class="pair">
+        <a class="btn line" href="tel:${esc_(r.phone)}">${ICON.phone}Call</a>
+        <a class="btn line" href="${waUrl_(r.phone)}" target="_blank" rel="noopener">${ICON.wa}WhatsApp</a>
+      </div>
+    </section>
+    <section class="card">
+      <dl class="rows">
+        ${row_('Phone', esc_(r.phone))}
+        ${row_('Doctor asked for', esc_(r.doctor || 'No preference'))}
+        ${row_('Department', esc_(r.department))}
+        ${row_('Preferred day', esc_(r.preferred), true)}
+        ${r.message ? row_('Note', esc_(r.message), true) : ''}
+        ${row_('Request', esc_(r.id))}
+      </dl>
+    </section>
+    <form class="card" method="get" action="${url}" target="_top">
       ${hidden}
-      <label>Doctor (the appointment goes on their calendar)<select name="doctor"><option value="">Not assigned (no calendar entry)</option>${CONFIG.DOCTORS.map(d => `<option${d === r.doctor ? ' selected' : ''}>${esc_(d)}</option>`).join('')}</select></label>
-      <label>Appointment date<input type="date" name="cdate" value="${iso}" required></label>
+      <h3>Confirm the appointment</h3>
+      <label>Doctor<select name="doctor"><option value="">Not assigned (no calendar)</option>${CONFIG.DOCTORS.map(d => `<option${d === r.doctor ? ' selected' : ''}>${esc_(d)}</option>`).join('')}</select></label>
+      <label>Date<input type="date" name="cdate" value="${iso}" required></label>
       <label>Time<select name="ctime">${CONFIG.SESSIONS.map(sess => `<optgroup label="${sess[0]}">${slots_([sess]).map(t => `<option${timeLabel_(t) === r.preferredTime ? ' selected' : ''}>${timeLabel_(t)}</option>`).join('')}</optgroup>`).join('')}</select></label>
-      <button name="do" value="approve" class="ok">Approve and add to the calendar</button>
+      <button class="btn primary" name="do" value="approve">${ICON.tick}Approve and add to calendar</button>
     </form>
-    <form method="get" action="${url}" target="_top" class="decline">
-      ${hidden}
-      <label>Reason (optional, goes in the message to the patient)<input type="text" name="reason" maxlength="300"></label>
-      <button name="do" value="decline">Decline</button>
-    </form>`);
+    <details class="card">
+      <summary>Decline this booking ${ICON.down}</summary>
+      <form method="get" action="${url}" target="_top">
+        ${hidden}
+        <label>Reason (optional, goes in the message to the patient)<input type="text" name="reason" maxlength="300"></label>
+        <button class="btn line danger" name="do" value="decline">Decline</button>
+      </form>
+    </details>` });
 }
 
-// The PIN form, unless the right PIN came with the request. This phone remembers the PIN after the first time.
+// The PIN screen, unless the right PIN came with the request. This phone remembers the PIN after the first time.
 function pinGate_(p) {
   const pin = PropertiesService.getScriptProperties().getProperty('RECEPTION_PIN');
-  if (!pin) return page_('Reception PIN not set', '<p>Add <strong>RECEPTION_PIN</strong> in Apps Script under <strong>Project Settings &gt; Script properties</strong>, then open this link again.</p>');
+  if (!pin) return page_({ title: 'Set up', body: result_('cross', 'Reception PIN not set', 'Add RECEPTION_PIN in Apps Script under Project Settings, Script properties, then open this page again.') });
   if (p.pin === pin) return null;
   const url = ScriptApp.getService().getUrl();
-  const wrong = p.pin ? '<p style="color:#C8102E">That PIN is not right. Try again.</p>' : '';
-  return page_('Reception only', `${wrong}<p>Enter the reception PIN to see bookings.</p>
-    <form method="get" action="${url}" target="_top" id="pinform">
+  return page_({ title: 'Reception', body: `
+    <form class="card pin" method="get" action="${url}" target="_top" id="pinform">
+      <span class="ring">${ICON.lock}</span>
+      <h2>Reception only</h2>
+      <p class="muted">Enter the reception PIN to see bookings.</p>
+      ${p.pin ? '<p class="err">That PIN is not right. Try again.</p>' : ''}
       ${['view', 'id', 't'].filter(k => p[k]).map(k => `<input type="hidden" name="${k}" value="${esc_(p[k])}">`).join('')}
-      <label>PIN<input type="password" name="pin" inputmode="numeric" autocomplete="off" required></label>
-      <button class="ok">Continue</button>
+      <input type="password" name="pin" inputmode="numeric" autocomplete="off" aria-label="PIN" required autofocus>
+      <button class="btn primary">Continue</button>
     </form>
     <script>
       try {
@@ -198,7 +219,7 @@ function pinGate_(p) {
         if (saved) { f.pin.value = saved; f.submit(); }
         f.addEventListener('submit', function () { localStorage.setItem('rnh-pin', f.pin.value); });
       } catch (e) {}
-    </script>`);
+    </script>` });
 }
 
 /* ---------------- Reception's list of bookings waiting for a decision ---------------- */
@@ -209,18 +230,57 @@ function pendingPage_(pin) {
   const pending = values.filter(v => v[COL['Status'] - 1] === 'Pending').reverse(); // newest first
   const items = pending.map(v => {
     const href = `${url}?id=${encodeURIComponent(v[COL['Request ID'] - 1])}&t=${encodeURIComponent(v[COL['Token'] - 1])}&pin=${encodeURIComponent(pin)}`;
+    const name = v[COL['Name'] - 1], day = dayLabel_(v[COL['Preferred date'] - 1]);
     const doctor = v[COL['Doctor'] - 1] && v[COL['Doctor'] - 1] !== 'No preference' ? v[COL['Doctor'] - 1] : 'No preference';
-    return `<li><a href="${href}" target="_top"><strong>${esc_(v[COL['Name'] - 1])}</strong>
-      <span>${esc_(v[COL['Preferred date'] - 1])}, ${esc_(v[COL['Preferred time'] - 1])}</span>
-      <span>${esc_(doctor)}, ${esc_(v[COL['Phone'] - 1])}</span></a></li>`;
+    return `<a class="booking" href="${href}" target="_top">
+      <span class="avatar">${esc_(name.trim().charAt(0).toUpperCase())}</span>
+      <span class="b-main">
+        <strong>${esc_(name)}</strong>
+        <span class="b-when${day === 'Today' ? ' is-today' : ''}">${esc_(day)}, ${esc_(v[COL['Preferred time'] - 1])}</span>
+        <span class="b-meta">${esc_(doctor)}</span>
+      </span>
+      ${ICON.next}
+    </a>`;
   }).join('');
-  return page_('Pending bookings', `<p>${pending.length ? `${pending.length} waiting for a decision. Tap one to approve or decline.` : 'Nothing waiting. New WhatsApp bookings appear here.'}</p>
-    ${pending.length ? `<ul class="list">${items}</ul>` : ''}
-    <p><a href="${url}?view=reception&pin=${encodeURIComponent(pin)}" target="_top">Refresh</a></p>`);
+  return page_({ title: 'Bookings', count: pending.length, body:
+    (pending.length
+      ? `<p class="lead">${pending.length === 1 ? '1 booking is' : pending.length + ' bookings are'} waiting. Tap one to approve.</p>${items}`
+      : `<section class="card empty"><span class="ring calm">${ICON.tick}</span><h2>All caught up</h2><p class="muted">New WhatsApp bookings appear here. Tap Refresh after one comes in.</p></section>`) +
+    `<div class="dock"><a class="btn primary" href="${url}?view=reception&pin=${encodeURIComponent(pin)}" target="_top">${ICON.refresh}Refresh</a></div>` });
 }
-function backLink_(pin, top) {
-  return `<p style="margin:${top ? '0 0 16px' : '20px 0 0'}"><a href="${ScriptApp.getService().getUrl()}?view=reception&pin=${encodeURIComponent(pin || '')}" target="_top">&larr; All pending bookings</a></p>`;
+
+// "Thursday, 12 November 2026" -> "Today", "Tomorrow" or "Thu 12 Nov"
+function dayLabel_(pretty) {
+  const iso = isoDate_(pretty);
+  if (!iso) return pretty;
+  const day = n => Utilities.formatDate(new Date(Date.now() + n * 864e5), CONFIG.TIMEZONE, 'yyyy-MM-dd');
+  if (iso === day(0)) return 'Today';
+  if (iso === day(1)) return 'Tomorrow';
+  const [y, m, d] = iso.split('-').map(Number);
+  return Utilities.formatDate(new Date(y, m - 1, d), CONFIG.TIMEZONE, 'EEE d MMM');
 }
+function result_(kind, heading, text) {
+  return `<section class="card result"><span class="ring ${kind}">${ICON[kind]}</span><h2>${heading}</h2><p>${text}</p></section>`;
+}
+function listButton_(pin) {
+  return `<a class="btn line" href="${ScriptApp.getService().getUrl()}?view=reception&pin=${encodeURIComponent(pin || '')}" target="_top">${ICON.list}All bookings</a>`;
+}
+
+const ICON = (() => {
+  const i = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  return {
+    phone: i('<path d="M5 3.5h3.2l1.6 4.2-2 1.3a11 11 0 0 0 7.2 7.2l1.3-2 4.2 1.6V19a1.5 1.5 0 0 1-1.6 1.5A16 16 0 0 1 3.5 5.1 1.5 1.5 0 0 1 5 3.5z"/>'),
+    wa: i('<path d="M4.6 19.4l1.1-3.4a8 8 0 1 1 2.8 2.6z"/><path d="M9.3 8.6c.3-.4.7-.5 1-.4l.9 2-.6.8a5.6 5.6 0 0 0 2.4 2.4l.8-.6 2 .9c.1.3 0 .7-.4 1-.8.4-2 .3-3.4-.6a9.2 9.2 0 0 1-3-3c-.9-1.4-1-2.6-.7-3.5z"/>'),
+    tick: i('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
+    cross: i('<path d="M6 6l12 12M18 6 6 18"/>'),
+    lock: i('<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>'),
+    next: i('<path d="M9.5 6l6 6-6 6"/>'),
+    down: i('<path d="m6 9.5 6 6 6-6"/>'),
+    back: i('<path d="M14.5 6 8.5 12l6 6"/>'),
+    list: i('<path d="M8 6.5h12M8 12h12M8 17.5h12M4 6.5h.01M4 12h.01M4 17.5h.01"/>'),
+    refresh: i('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>')
+  };
+})();
 
 /* ---------------- Doctors' calendars ---------------- */
 
@@ -256,10 +316,7 @@ function waUrl_(phone, text) {
   let n = String(phone || '').replace(/\D/g, '');
   if (n.length === 11 && n[0] === '0') n = n.slice(1);
   if (n.length === 10) n = '91' + n;
-  return 'https://wa.me/' + n + '?text=' + encodeURIComponent(text);
-}
-function waButton_(phone, text, label) {
-  return `<p style="margin:20px 0 0"><a href="${waUrl_(phone, text)}" target="_blank" rel="noopener" style="display:block;text-align:center;padding:14px;border-radius:999px;background:#13804A;color:#FFFFFF;font-weight:600;text-decoration:none">${esc_(label)}</a></p>`;
+  return 'https://wa.me/' + n + (text ? '?text=' + encodeURIComponent(text) : '');
 }
 
 /* ---------------- Helpers ---------------- */
@@ -345,21 +402,79 @@ function isoDate_(pretty) {
 }
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
-function page_(title, body) {
-  return HtmlService.createHtmlOutput(`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;color:#0B2A6F;background:#F2F5FA;margin:0;padding:24px}
-    main{max-width:560px;margin:0 auto;background:#fff;border-radius:20px;padding:28px;box-shadow:0 20px 50px -30px rgba(11,42,111,.4)}
-    h1{font-family:Georgia,serif;font-weight:400;font-size:28px;margin:0 0 18px}
-    dl{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;margin:0 0 22px}dt{color:#4F5B74}dd{margin:0}
-    form{display:grid;gap:12px;margin-top:16px}label{display:grid;gap:6px;font-weight:600;font-size:14px}
-    input,select{font:inherit;padding:12px;border:1px solid #B9C4D8;border-radius:10px;background:#fff}
-    button{font:inherit;font-weight:600;padding:14px;border-radius:999px;border:1px solid #0B2A6F;background:#fff;color:#0B2A6F;cursor:pointer}
-    button.ok{background:#C8102E;border-color:#C8102E;color:#fff}.decline{padding-top:16px;border-top:1px solid #DCE2EE}
-    a{color:#0B2A6F;font-weight:600}
-    .list{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
-    .list a{display:grid;gap:2px;padding:14px 16px;border:1px solid #DCE2EE;border-radius:14px;text-decoration:none;font-weight:400}
-    .list strong{font-size:17px}.list span{color:#4F5B74;font-size:14px}
-  </style><main><p style="margin:0 0 4px;color:#4F5B74;font-size:13px">${CONFIG.HOSPITAL_NAME}</p><h1>${esc_(title)}</h1>${body}</main>`)
-    .setTitle(title + ' | ' + CONFIG.HOSPITAL_NAME);
+// Every reception screen. The viewport has to be set here: Google ignores one written inside the page,
+// which is what made the screens tiny on phones.
+function page_({ title, body, back, count }) {
+  const list = back ? `${ScriptApp.getService().getUrl()}?view=reception&pin=${encodeURIComponent(back)}` : '';
+  return HtmlService.createHtmlOutput(`<style>
+    :root{--ink:#0B2A6F;--red:#C8102E;--green:#13804A;--fog:#F2F5FA;--line:#DCE2EE;--slate:#4F5B74}
+    *{box-sizing:border-box}
+    html{-webkit-text-size-adjust:100%}
+    body{margin:0;background:var(--fog);color:var(--ink);font:17px/1.5 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    svg{width:22px;height:22px;flex:none}
+    .bar{position:sticky;top:0;z-index:2;background:var(--ink);color:#fff;padding:14px 16px 16px}
+    .bar-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:14px}
+    .org{display:block;font-size:13px;color:#BAC6DE}
+    .bar h1{margin:0;font:400 26px/1.15 Georgia,serif}
+    .back{display:grid;place-items:center;width:46px;height:46px;flex:none;border-radius:50%;background:rgba(255,255,255,.14);color:#fff}
+    .count{margin-left:auto;min-width:46px;height:46px;padding:0 12px;border-radius:999px;background:var(--red);display:grid;place-items:center;font-weight:700;font-size:19px}
+    main{max-width:640px;margin:0 auto;padding:18px 16px 120px;display:grid;gap:14px}
+    .card{background:#fff;border-radius:22px;padding:20px;box-shadow:0 1px 0 rgba(11,42,111,.05),0 16px 32px -24px rgba(11,42,111,.5)}
+    .lead{margin:2px 4px;color:var(--slate);font-size:16px}
+    .muted{color:var(--slate);margin:0}
+    .booking{display:flex;align-items:center;gap:14px;min-height:92px;padding:16px 14px 16px 16px;border-radius:22px;background:#fff;color:inherit;text-decoration:none;box-shadow:0 1px 0 rgba(11,42,111,.05),0 16px 32px -24px rgba(11,42,111,.5)}
+    .booking:active{background:#E8EDF6}
+    .booking>svg{color:#9AA7C2}
+    .avatar{width:54px;height:54px;flex:none;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:22px;font-weight:700}
+    .b-main{flex:1;min-width:0;display:grid;gap:2px}
+    .b-main strong{font-size:19px;line-height:1.25}
+    .b-when{font-weight:700;font-size:16px}
+    .b-when.is-today{color:var(--red)}
+    .b-meta{color:var(--slate);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;padding:0 20px;border:0;border-radius:16px;font:inherit;font-weight:700;font-size:17px;text-decoration:none;cursor:pointer}
+    .btn.primary{background:var(--red);color:#fff}
+    .btn.wa{background:var(--green);color:#fff}
+    .btn.line{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+    .btn.danger{color:var(--red);box-shadow:inset 0 0 0 2px #F2C4CC}
+    .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+    .pname{margin:0;font:400 30px/1.15 Georgia,serif}
+    .when{margin:6px 0 0;font-size:20px;font-weight:700}
+    .rows{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:18px 16px}
+    .rows div{min-width:0}
+    .rows .wide{grid-column:1/-1}
+    .rows dt{margin-bottom:2px;color:var(--slate);font-size:14px}
+    .rows dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+    form{display:grid;gap:16px;margin:0}
+    h3{margin:0;font:400 23px/1.2 Georgia,serif}
+    label{display:grid;gap:8px;font-weight:700;font-size:15px}
+    input,select{width:100%;min-height:58px;padding:0 16px;border:2px solid #C9D3E6;border-radius:14px;background:#fff;color:var(--ink);font:inherit;font-size:18px;font-weight:400}
+    input:focus,select:focus{outline:none;border-color:var(--ink)}
+    details summary{display:flex;align-items:center;justify-content:space-between;min-height:30px;font-weight:700;cursor:pointer;list-style:none}
+    details summary::-webkit-details-marker{display:none}
+    details[open] summary{margin-bottom:16px}
+    details[open] summary svg{transform:rotate(180deg)}
+    .ring{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;background:#E8EDF6;color:var(--ink)}
+    .ring svg{width:40px;height:40px}
+    .ring.tick,.ring.calm{background:#E3F4EA;color:var(--green)}
+    .ring.cross{background:#FBE8EB;color:var(--red)}
+    .result,.empty,.pin{text-align:center}
+    .result h2,.empty h2,.pin h2{margin:0 0 6px;font:400 28px/1.2 Georgia,serif}
+    .result p{margin:0;font-size:19px;line-height:1.55}
+    .empty{padding:36px 20px}
+    .note{margin:0 4px;color:var(--slate);font-size:15px;text-align:center}
+    .pin{display:grid;gap:14px;padding:28px 20px}
+    .pin .ring{margin-bottom:0}
+    .pin input{text-align:center;font-size:30px;letter-spacing:.35em;min-height:64px}
+    .err{margin:0;color:var(--red);font-weight:700}
+    .dock{position:fixed;left:0;right:0;bottom:0;padding:16px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(rgba(242,245,250,0),var(--fog) 35%)}
+    .dock .btn{max-width:608px;margin:0 auto}
+  </style>
+  <header class="bar"><div class="bar-in">
+    ${list ? `<a class="back" href="${list}" target="_top" aria-label="All bookings">${ICON.back}</a>` : ''}
+    <div><span class="org">${CONFIG.HOSPITAL_NAME}</span><h1>${esc_(title)}</h1></div>
+    ${count ? `<span class="count" aria-label="${count} waiting">${count}</span>` : ''}
+  </div></header>
+  <main>${body}</main>`)
+    .setTitle(title + ' | ' + CONFIG.HOSPITAL_NAME)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }

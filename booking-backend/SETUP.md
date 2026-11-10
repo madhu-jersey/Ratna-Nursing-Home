@@ -36,7 +36,7 @@ The PIN lives only here, never in the code, because the website's code is public
 2. For a new deployment: click the gear next to *Select type*, choose **Web app**, set **Execute as: Me** and **Who has access: Anyone**. ("Anyone" lets the website save requests and lets reception open the approval link. It does not give anyone access to the sheet.)
 3. Click **Deploy**, then **Authorize access**. Google warns that the app is unverified because you wrote it yourself: choose **Advanced > Go to (project name)**, then **Allow**. It asks to edit this spreadsheet and to manage your calendars (for the doctors' appointment calendars).
 4. Copy the **Web app URL**. It ends in `/exec`.
-5. Open that URL in a browser. It should say **Version 6: reception page, no link for patients**.
+5. Open that URL in a browser. It should say **Version 7: reception app screens**.
 
 ## 4. Connect the website
 
