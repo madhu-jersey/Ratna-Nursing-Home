@@ -411,7 +411,7 @@
 
   /* ---------- Booking forms (the section and the popup): validate, save to the hospital's booking service, then hand off to WhatsApp ---------- */
   // The request as a WhatsApp message to reception, every detail already typed
-  const waText = (form, id, approveUrl) => {
+  const waText = (form, id) => {
     const val = n => form.elements[n]?.value?.trim() || '';
     const chosen = n => { const el = form.elements[n]; return el?.tagName === 'SELECT' && el.value ? el.selectedOptions[0].text : ''; };
     const date = val('date');
@@ -421,10 +421,10 @@
       `Name: ${val('name')}`, `Phone: ${val('phone')}`,
       chosen('doctor') && `Doctor: ${chosen('doctor')}`, chosen('service') && `Department: ${chosen('service')}`,
       day && `Day: ${day}`, time && `Time: ${time}`, val('message') && `Note: ${val('message')}`,
-      id && `Request ID: ${id}`].filter(Boolean).join('\n') + (approveUrl ? `\n\nFor reception, to confirm: ${approveUrl}` : '');
+      id && `Request ID: ${id}`].filter(Boolean).join('\n');
   };
-  const waHref = (form, id, approveUrl) => `https://wa.me/${form.dataset.whatsapp}?text=${encodeURIComponent(waText(form, id, approveUrl))}`;
-  // The request's ID and secret token are made here, so the approval link can go into the message straight away
+  const waHref = (form, id) => `https://wa.me/${form.dataset.whatsapp}?text=${encodeURIComponent(waText(form, id))}`;
+  // The request's ID and secret token are made here, so the saved booking and the WhatsApp message share one ID
   const newId = () => { const d = new Date(), r = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join(''); return `RNH-${String(d.getFullYear()).slice(2)}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${r}`; };
   const newToken = () => crypto.randomUUID ? crypto.randomUUID() : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
   const store = (kind, key, val) => { try { return val === undefined ? window[kind].getItem(key) : window[kind].setItem(key, val); } catch { return null; } };
@@ -488,7 +488,7 @@
       const bad = fields.filter(n => !validate(n));
       if (bad.length) { first(bad[0]).focus(); return; }
       const endpoint = form.dataset.endpoint, id = newId(), token = newToken();
-      const wa = waHref(form, id, endpoint && `${endpoint}?id=${id}&t=${token}`);
+      const wa = waHref(form, id);
       // WhatsApp opens while the tap still counts, so the browser lets it through
       const win = window.open(wa, '_blank');
       if (win) win.opener = null;

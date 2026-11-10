@@ -4,8 +4,9 @@
  * Lives inside a Google Sheet (Extensions > Apps Script) and is deployed as a web app.
  *  1. The patient taps "Book on WhatsApp" on the website. WhatsApp opens with their request typed out for
  *     reception, and at the same moment the website saves it here as a row in "Appointments".
- *  2. The patient's message ends with a "For reception" link. Reception taps it, enters the reception PIN once
- *     per phone, checks the doctor, date and time, and approves (or declines).
+ *  2. Reception keeps the "Pending bookings" page (this web app's URL + ?view=reception) on the home screen of
+ *     their phone. When a WhatsApp booking arrives, they open it, enter the PIN once per phone, tap the
+ *     request, check the doctor, date and time, and approve (or decline). Patients never see this page or link.
  *  3. Approving puts the appointment on that doctor's Google Calendar and offers a ready-written WhatsApp
  *     confirmation to the patient. No email is sent at any point.
  *
@@ -14,7 +15,7 @@
  */
 
 // Shown when the web app URL is opened in a browser, so you can see which code is live
-const VERSION = 'Version 5: WhatsApp only, PIN approval';
+const VERSION = 'Version 6: reception page, no link for patients';
 
 const CONFIG = {
   HOSPITAL_NAME: 'Ratna Nursing Home',
@@ -95,18 +96,19 @@ function doPost(e) {
 
 function doGet(e) {
   const p = (e && e.parameter) || {};
+  if (p.view === 'reception') return pinGate_(p) || pendingPage_(p.pin);
   if (!p.id) return page_('Booking service', `<p>The Ratna Nursing Home booking service is running.</p><p><strong>${VERSION}</strong></p>`);
 
-  const found = findRequest_(p.id, p.t);
-  if (!found) return page_('Request not found', '<p>This link is not valid. Check the Appointments sheet for this request.</p>');
-  const { row, r } = found;
-
-  // Only reception can approve: the link travels in the patient's own message, so it also needs the PIN
+  // Every request page is reception's: the PIN comes first
   const gate = pinGate_(p);
   if (gate) return gate;
 
+  const found = findRequest_(p.id, p.t);
+  if (!found) return page_('Request not found', `<p>This request is not in the Appointments sheet.</p>${backLink_(p.pin)}`);
+  const { row, r } = found;
+
   if (r.status !== 'Pending') {
-    return page_(`Already ${r.status.toLowerCase()}`, `<p>Request <strong>${esc_(r.id)}</strong> for ${esc_(r.name)} was ${esc_(r.status.toLowerCase())}${r.decidedAt ? ' on ' + esc_(r.decidedAt) : ''}.</p>`);
+    return page_(`Already ${r.status.toLowerCase()}`, `<p>Request <strong>${esc_(r.id)}</strong> for ${esc_(r.name)} was ${esc_(r.status.toLowerCase())}${r.decidedAt ? ' on ' + esc_(r.decidedAt) : ''}.</p>${backLink_(p.pin)}`);
   }
 
   if (p.do === 'approve' || p.do === 'decline') {
@@ -136,13 +138,13 @@ function doGet(e) {
       const msg = `Hello ${r.name}, your appointment at ${CONFIG.HOSPITAL_NAME} is confirmed for ${date}${time ? ', ' + time : ''}${doctor ? ' with ' + doctor : ''}.\nAddress: ${CONFIG.HOSPITAL_ADDRESS}.\nPlease bring any earlier reports and prescriptions. To change or cancel, reply here or call ${CONFIG.HOSPITAL_PHONE}.`;
       return page_('Approved', `<p>Request <strong>${esc_(r.id)}</strong> is approved for <strong>${esc_(date)}${time ? ', ' + esc_(time) : ''}</strong>${doctor ? ' with ' + esc_(doctor) : ''}.</p>
         <p>${eventNote} The sheet is updated.</p>
-        ${waButton_(r.phone, msg, 'Send confirmation on WhatsApp')}`);
+        ${waButton_(r.phone, msg, 'Send confirmation on WhatsApp')}${backLink_(p.pin)}`);
     }
     sh.getRange(row, COL['Status']).setValue('Declined');
     sh.getRange(row, COL['Decided at']).setValue(decided);
     const reason = clean_(p.reason, 300);
     const msg = `Hello ${r.name}, we are not able to confirm your appointment request as sent.${reason ? ' ' + reason : ''} Please reply here or call ${CONFIG.HOSPITAL_PHONE} and we will find a time that works.`;
-    return page_('Declined', `<p>Request <strong>${esc_(r.id)}</strong> is declined.</p>${waButton_(r.phone, msg, 'Tell the patient on WhatsApp')}`);
+    return page_('Declined', `<p>Request <strong>${esc_(r.id)}</strong> is declined.</p>${waButton_(r.phone, msg, 'Tell the patient on WhatsApp')}${backLink_(p.pin)}`);
   }
 
   // Show the request with the choices to approve. Approving needs this click,
@@ -151,7 +153,9 @@ function doGet(e) {
   const iso = isoDate_(r.preferred);
   const hidden = `<input type="hidden" name="id" value="${esc_(r.id)}"><input type="hidden" name="t" value="${esc_(p.t)}"><input type="hidden" name="pin" value="${esc_(p.pin)}">`;
   return page_('Review appointment request', `
+    ${backLink_(p.pin, true)}
     <dl>
+      <dt>Request</dt><dd>${esc_(r.id)}</dd>
       <dt>Name</dt><dd>${esc_(r.name)}</dd>
       <dt>Phone</dt><dd><a href="tel:${esc_(r.phone)}">${esc_(r.phone)}</a></dd>
       <dt>Doctor asked for</dt><dd>${esc_(r.doctor || 'No preference')}</dd>
@@ -181,9 +185,9 @@ function pinGate_(p) {
   if (p.pin === pin) return null;
   const url = ScriptApp.getService().getUrl();
   const wrong = p.pin ? '<p style="color:#C8102E">That PIN is not right. Try again.</p>' : '';
-  return page_('Reception only', `${wrong}<p>Enter the reception PIN to review this request.</p>
+  return page_('Reception only', `${wrong}<p>Enter the reception PIN to see bookings.</p>
     <form method="get" action="${url}" target="_top" id="pinform">
-      <input type="hidden" name="id" value="${esc_(p.id)}"><input type="hidden" name="t" value="${esc_(p.t)}">
+      ${['view', 'id', 't'].filter(k => p[k]).map(k => `<input type="hidden" name="${k}" value="${esc_(p[k])}">`).join('')}
       <label>PIN<input type="password" name="pin" inputmode="numeric" autocomplete="off" required></label>
       <button class="ok">Continue</button>
     </form>
@@ -195,6 +199,27 @@ function pinGate_(p) {
         f.addEventListener('submit', function () { localStorage.setItem('rnh-pin', f.pin.value); });
       } catch (e) {}
     </script>`);
+}
+
+/* ---------------- Reception's list of bookings waiting for a decision ---------------- */
+
+function pendingPage_(pin) {
+  const url = ScriptApp.getService().getUrl();
+  const values = sheet_().getDataRange().getDisplayValues().slice(1);
+  const pending = values.filter(v => v[COL['Status'] - 1] === 'Pending').reverse(); // newest first
+  const items = pending.map(v => {
+    const href = `${url}?id=${encodeURIComponent(v[COL['Request ID'] - 1])}&t=${encodeURIComponent(v[COL['Token'] - 1])}&pin=${encodeURIComponent(pin)}`;
+    const doctor = v[COL['Doctor'] - 1] && v[COL['Doctor'] - 1] !== 'No preference' ? v[COL['Doctor'] - 1] : 'No preference';
+    return `<li><a href="${href}" target="_top"><strong>${esc_(v[COL['Name'] - 1])}</strong>
+      <span>${esc_(v[COL['Preferred date'] - 1])}, ${esc_(v[COL['Preferred time'] - 1])}</span>
+      <span>${esc_(doctor)}, ${esc_(v[COL['Phone'] - 1])}</span></a></li>`;
+  }).join('');
+  return page_('Pending bookings', `<p>${pending.length ? `${pending.length} waiting for a decision. Tap one to approve or decline.` : 'Nothing waiting. New WhatsApp bookings appear here.'}</p>
+    ${pending.length ? `<ul class="list">${items}</ul>` : ''}
+    <p><a href="${url}?view=reception&pin=${encodeURIComponent(pin)}" target="_top">Refresh</a></p>`);
+}
+function backLink_(pin, top) {
+  return `<p style="margin:${top ? '0 0 16px' : '20px 0 0'}"><a href="${ScriptApp.getService().getUrl()}?view=reception&pin=${encodeURIComponent(pin || '')}" target="_top">&larr; All pending bookings</a></p>`;
 }
 
 /* ---------------- Doctors' calendars ---------------- */
@@ -331,6 +356,10 @@ function page_(title, body) {
     input,select{font:inherit;padding:12px;border:1px solid #B9C4D8;border-radius:10px;background:#fff}
     button{font:inherit;font-weight:600;padding:14px;border-radius:999px;border:1px solid #0B2A6F;background:#fff;color:#0B2A6F;cursor:pointer}
     button.ok{background:#C8102E;border-color:#C8102E;color:#fff}.decline{padding-top:16px;border-top:1px solid #DCE2EE}
+    a{color:#0B2A6F;font-weight:600}
+    .list{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
+    .list a{display:grid;gap:2px;padding:14px 16px;border:1px solid #DCE2EE;border-radius:14px;text-decoration:none;font-weight:400}
+    .list strong{font-size:17px}.list span{color:#4F5B74;font-size:14px}
   </style><main><p style="margin:0 0 4px;color:#4F5B74;font-size:13px">${CONFIG.HOSPITAL_NAME}</p><h1>${esc_(title)}</h1>${body}</main>`)
     .setTitle(title + ' | ' + CONFIG.HOSPITAL_NAME);
 }
